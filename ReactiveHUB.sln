@@ -8,8 +8,13 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReactiveHUB.Wpf", "ReactiveHUB.WPF\ReactiveHUB.Wpf.csproj", "{C3ECDD8F-1133-4A9F-BC60-20E45FD8AF5F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReactiveHUB.WinRT", "ReactiveHUB.WinRT\ReactiveHUB.WinRT.csproj", "{EEAB1D62-678D-4B8F-9825-FDD78C876B99}"
-EndProjectReactiveHUB
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReactiveHUB.Android", "ReactiveHUB\ReactiveHUB.Android.csproj", "{1D0A3B67-D2E7-4316-912E-500C6895FCD6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{DD099D48-CB8C-434E-854C-A17C3DCAAD51}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

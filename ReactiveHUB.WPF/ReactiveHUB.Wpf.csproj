@@ -133,7 +133,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ProjectTemplate.Core\ReactiveHUB.Core.csproj">
+    <ProjectReference Include="..\ReactiveHUB.Core\ReactiveHUB.Core.csproj">
       <Project>{04039ef0-4288-430f-8c8b-f62fa4eb7bb2}</Project>
       <Name>ReactiveHUB.Core</Name>
     </ProjectReference>
