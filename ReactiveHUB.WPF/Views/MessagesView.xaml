@@ -1,0 +1,19 @@
+﻿<UserControl x:Class="ProjectTemplate.Views.MessagesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:views="clr-namespace:ProjectTemplate.Views"
+             mc:Ignorable="d" 
+             d:DesignHeight="300" d:DesignWidth="300">
+    <Grid>
+        <ListView  x:Name="MessageBox">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Label>Test</Label>
+                    <!--<views:MessageListItem></views:MessageListItem>-->
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </Grid>
+</UserControl>

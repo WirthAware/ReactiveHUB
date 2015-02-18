@@ -20,6 +20,7 @@ namespace ProjectTemplate
         public App()
         {
             Locator.CurrentMutable.Register(() => new ColorPickerView(), typeof(IViewFor<ColorPickerViewModel>));
+            Locator.CurrentMutable.Register(() => new MessagesView(), typeof(IViewFor<MessagesViewModel>));
         }
     }
 }

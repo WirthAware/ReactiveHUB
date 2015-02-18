@@ -12,22 +12,17 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using ProjectTemplate.ViewModels;
-using ReactiveUI.Xaml;
 
-namespace ProjectTemplate
+namespace ProjectTemplate.Views
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Interaction logic for MessageListItem.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MessageListItem : UserControl
     {
-        public MainWindow()
+        public MessageListItem()
         {
             InitializeComponent();
-            var foo = new ViewModelViewHost();
-            ViewHost.ViewModel = new ColorPickerViewModel();
-            ViewHost.ViewModel = new MessagesViewModel();
         }
     }
 }
