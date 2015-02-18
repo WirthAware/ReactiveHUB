@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
+using System.Reactive;
+using System.Reactive.Linq;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Web;
 using System.Web.Script.Serialization;
 
@@ -18,16 +18,10 @@ namespace ReactiveHub.Integration.Twitter
 
         public string Secret { get; private set; }
 
-
-        /// <summary>
-        /// The format string that is used to parse <see cref="DateTime"/> from the JSON reply
-        /// </summary>
-        public const string TwitterDateFormat = "ddd MMM dd HH:mm:ss +ffff yyyy";
-
         /// <summary>
         /// The bearer token is the authentication token when authenticating as application
         /// </summary>
-        private string bearerToken = string.Empty;
+        private IObservable<string> bearerToken;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ApplicationContext"/> class.
@@ -38,6 +32,7 @@ namespace ReactiveHub.Integration.Twitter
         {
             Token = token;
             Secret = secret;
+            FetchBearerToken();
         }
 
         public UserContext CreateUserContext(string userToken, string userSecret)
@@ -46,78 +41,14 @@ namespace ReactiveHub.Integration.Twitter
         }
 
         /// <summary>
-        /// Gets the authentication token by authenticating as application
-        /// </summary>
-        /// <returns>A task that returns the authentication token</returns>
-        /// <remarks>
-        /// The methods in this library will automatically fetch a token when it is needed.
-        /// The token is cached.
-        /// </remarks>
-        public async Task<string> GetBearerTokenAsync()
-        {
-            if (!string.IsNullOrEmpty(bearerToken))
-            {
-                return bearerToken;
-            }
-
-            return await Task.Factory.StartNew(
-              () =>
-              {
-                  var base64Credentials = CombineApiKey();
-
-                  var client = new WebClient();
-                  client.Headers.Add("Authorization", "Basic " + base64Credentials);
-                  var result = client.UploadString("https://api.twitter.com/oauth2/token", "grant_type=client_credentials");
-
-                  var serializer = new JavaScriptSerializer();
-                  var json = serializer.Deserialize<Dictionary<string, object>>(result);
-
-                  bearerToken = (string)json["access_token"];
-
-                  Trace.WriteLine("Got bearer token: " + bearerToken, "Information");
-
-                  return bearerToken;
-              });
-        }
-
-        /// <summary>
-        /// Tells twitter that the authentication token is no longer valid.
-        /// </summary>
-        /// <returns>A task that can be awaited</returns>
-        public async Task InvalidateBearerTokenAsync()
-        {
-            if (string.IsNullOrEmpty(bearerToken))
-            {
-                return;
-            }
-
-            await Task.Factory.StartNew(
-              () =>
-              {
-                  var client = new WebClient();
-                  client.Headers.Add("Authorization", "Basic " + CombineApiKey());
-                  client.UploadString("https://api.twitter.com/oauth2/invalidate_token", "access_token=" + bearerToken);
-                  Trace.WriteLine("Invalidated bearer token");
-              });
-        }
-
-        /// <summary>
         /// Performs a twitter search
         /// </summary>
         /// <param name="queryString">The term to search for</param>
-        /// <returns>A <see cref="Task"/> which returns the tweets found by the search</returns>
-        public async Task<IEnumerable<Tweet>> SearchAsync(string queryString)
+        public IObservable<Tweet> Search(string queryString)
         {
             Trace.WriteLine("Searching for '" + queryString + "'");
 
-            var reply = await RequestAsync(string.Format("https://api.twitter.com/1.1/search/tweets.json?q={0}", HttpUtility.UrlEncode(queryString)));
-
-            var json = new JavaScriptSerializer().Deserialize<Dictionary<string, object>>(reply);
-            var statuses = ((ArrayList)json["statuses"]).OfType<Dictionary<string, object>>();
-
-            var result = statuses.Select(Tweet.FromJsonObject).ToList();
-
-            return result;
+            return SearchInternal(string.Format("https://api.twitter.com/1.1/search/tweets.json?q={0}", HttpUtility.UrlEncode(queryString)));
         }
 
         /// <summary>
@@ -125,31 +56,21 @@ namespace ReactiveHub.Integration.Twitter
         /// </summary>
         /// <param name="queryString">The term to search for</param>
         /// <param name="tweetSinceId">All tweets that are earlier than the tweet specified by this Id are excluded from the search results</param>
-        /// <returns>A <see cref="Task"/> which returns the tweets found by the search</returns>
-        public async Task<IEnumerable<Tweet>> SearchAsync(string queryString, long tweetSinceId)
+        public IObservable<Tweet> Search(string queryString, long tweetSinceId)
         {
-            Trace.WriteLine("Searching for '" + queryString + "' ignoring tweets before " + tweetSinceId);
+            Trace.WriteLine("Searching for '" + queryString + "' ignoring tweets before #" + tweetSinceId);
 
-            var reply = await RequestAsync(string.Format("https://api.twitter.com/1.1/search/tweets.json?q={0}&since_id={1}", HttpUtility.UrlEncode(queryString), tweetSinceId));
-
-            var json = new JavaScriptSerializer().Deserialize<Dictionary<string, object>>(reply);
-            var statuses = ((ArrayList)json["statuses"]).OfType<Dictionary<string, object>>();
-
-            var result = statuses.Select(Tweet.FromJsonObject).ToList();
-
-            return result;
+            return SearchInternal(string.Format("https://api.twitter.com/1.1/search/tweets.json?q={0}&since_id={1}", HttpUtility.UrlEncode(queryString), tweetSinceId));
         }
 
         /// <summary>
         /// Regularly performs a twitter search and performs an <see cref="Action"/> for each newly found tweet
         /// </summary>
         /// <param name="queryString">The term to search for</param>
-        /// <param name="cancellationToken">A <see cref="CancellationToken"/> which can be used to stop the polling</param>
-        /// <param name="callback">The <see cref="Action"/> to perform for each tweet</param>
         /// <param name="interval">The interval between two searches. It has a minimum of 10s</param>
-        public void Poll(string queryString, CancellationToken cancellationToken, Action<Tweet> callback, TimeSpan interval)
+        public IObservable<Tweet> Poll(string queryString, TimeSpan interval)
         {
-            Poll(queryString, 0, cancellationToken, callback, interval);
+            return Poll(queryString, 0, interval);
         }
 
         /// <summary>
@@ -157,47 +78,30 @@ namespace ReactiveHub.Integration.Twitter
         /// </summary>
         /// <param name="queryString">The term to search for</param>
         /// <param name="initialTweetSinceId">If present all tweets that are earlier than the tweet specified by this Id are excluded from the search results</param>
-        /// <param name="cancellationToken">A <see cref="CancellationToken"/> which can be used to stop the polling</param>
-        /// <param name="callback">The <see cref="Action"/> to perform for each tweet</param>
         /// <param name="interval">The interval between two searches. It has a minimum of 10s</param>
-        public void Poll(string queryString, long initialTweetSinceId, CancellationToken cancellationToken, Action<Tweet> callback, TimeSpan interval)
+        public IObservable<Tweet> Poll(string queryString, long initialTweetSinceId, TimeSpan interval)
         {
             if (interval < TimeSpan.FromSeconds(10))
             {
                 throw new ArgumentOutOfRangeException("interval", "Intervals below 10s are not allowed.");
             }
 
-            var pollingThread = new Thread(
-              () =>
-              {
-                  var recentId = initialTweetSinceId;
+            // REVIEW: Is this correct? o.O - I need to send the highest TweedId from the previous searches with each request
 
-                  while (!cancellationToken.IsCancellationRequested)
-                  {
-                      var searchHandle = new ManualResetEvent(false);
-                      var searchTask = SearchAsync(queryString, recentId);
-                      searchTask.ContinueWith(t => searchHandle.Set(), cancellationToken);
+            var recentId = initialTweetSinceId;
 
-                      WaitHandle.WaitAny(new[] { searchHandle, cancellationToken.WaitHandle });
+            return Observable
+                .Interval(interval)
+                .Select(_ =>
+                {
+                    var search = Search(queryString, recentId);
 
-                      if (cancellationToken.IsCancellationRequested)
-                      {
-                          return;
-                      }
+                    // Update recent id when the search is finished
+                    search.Aggregate(recentId, (l, tweet) => Math.Max(l, tweet.Id)).Subscribe(i => recentId = i);
 
-                      var statuses = searchTask.Result.OrderBy(x => x.Id).ToArray();
-                      foreach (var tweet in statuses)
-                      {
-                          callback(tweet);
-                      }
-
-                      recentId = statuses.Any() ? statuses.Max(x => x.Id) : recentId;
-
-                      // Wait 60secs or until the cancellationToken has been cancelled
-                      cancellationToken.WaitHandle.WaitOne(interval);
-                  }
-              });
-            pollingThread.Start();
+                    return search;
+                })
+                .Merge();
         }
 
         /// <summary>
@@ -225,11 +129,61 @@ namespace ReactiveHub.Integration.Twitter
             // Release unmanaged resources here
         }
 
-        protected virtual async Task<string> RequestAsync(string url)
+        protected virtual IObservable<string> SendRequest(string url)
         {
+            return bearerToken.Select(token =>
+            {
+                var client1 = new WebClient();
+                client1.Headers.Add("Authorization", "Bearer " + token);
+                var result1 = Observable
+                    .FromEvent<DownloadStringCompletedEventHandler, DownloadStringCompletedEventArgs>(
+                        handler => client1.DownloadStringCompleted += handler,
+                        handler => client1.DownloadStringCompleted -= handler)
+                    .Select(args => args.Result)
+                    .FirstAsync();
+                client1.DownloadStringAsync(new Uri(url));
+
+                return result1;
+            }).Merge();
+        }
+
+        private void FetchBearerToken()
+        {
+            var base64Credentials = CombineApiKey();
+
             var client = new WebClient();
-            client.Headers.Add("Authorization", "Bearer " + await GetBearerTokenAsync());
-            return client.DownloadString(url);
+            client.Headers.Add("Authorization", "Basic " + base64Credentials);
+            bearerToken = Observable
+                .FromEvent<UploadStringCompletedEventHandler, UploadStringCompletedEventArgs>(
+                    handler => client.UploadStringCompleted += handler,
+                    handler => client.UploadStringCompleted -= handler)
+                .Select<UploadStringCompletedEventArgs, string>(args =>
+                {
+                    var serializer = new JavaScriptSerializer();
+                    var json = serializer.Deserialize<Dictionary<string, object>>(args.Result);
+
+                    return (string)json["access_token"];
+                }).FirstAsync();
+
+            client.UploadStringAsync(new Uri("https://api.twitter.com/oauth2/token"), "grant_type=client_credentials");
+        }
+
+        private IObservable<Unit> InvalidateBearerTokenAsync()
+        {
+            return bearerToken.Select(token =>
+            {
+                var client = new WebClient();
+                client.Headers.Add("Authorization", "Basic " + CombineApiKey());
+                var result = Observable
+                    .FromEvent<UploadStringCompletedEventHandler, UploadStringCompletedEventArgs>(
+                        handler => client.UploadStringCompleted += handler,
+                        handler => client.UploadStringCompleted -= handler)
+                    .Select(args => Unit.Default)
+                    .FirstAsync();
+                client.UploadString("https://api.twitter.com/oauth2/invalidate_token", "access_token=" + token);
+                return result;
+            })
+            .Merge();
         }
 
         private string CombineApiKey()
@@ -239,6 +193,19 @@ namespace ReactiveHub.Integration.Twitter
             var credentials = key + ":" + secret;
             var base64Credentials = Convert.ToBase64String(Encoding.UTF8.GetBytes(credentials));
             return base64Credentials;
+        }
+
+        private IObservable<Tweet> SearchInternal(string url)
+        {
+            return SendRequest(url)
+                .Select(reply =>
+                {
+                    var json = new JavaScriptSerializer().Deserialize<Dictionary<string, object>>(reply);
+                    var statuses = ((ArrayList)json["statuses"]).OfType<Dictionary<string, object>>();
+
+                    return statuses.Select(Tweet.FromJsonObject).ToObservable();
+                })
+                .Merge();
         }
     }
 }
