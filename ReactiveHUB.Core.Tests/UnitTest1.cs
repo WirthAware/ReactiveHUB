@@ -37,7 +37,6 @@
 
         public async Task<IObservable<int>> MakeMyObservable(IRemoteWebAPI myApi)
         {
-            IObservable<int> result = new int[] { }.ToObservable();
             var latest = await myApi.GetLatestValues();
             var newer = myApi.SubscribeToNewValues();
             return latest.ToObservable().Concat(newer);
