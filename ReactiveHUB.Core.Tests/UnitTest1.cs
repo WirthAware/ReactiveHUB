@@ -27,7 +27,7 @@
         public async Task TestMethod()
         {
 
-            var myObservable = this.MakeMyObservable(remoteWebAPI.Object);
+            var myObservable = await this.MakeMyObservable(remoteWebAPI.Object);
 
             var items = await myObservable.ToArray().FirstAsync();
 
@@ -35,23 +35,12 @@
             CollectionAssert.AreEqual(new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }, items);
         }
 
-        public IObservable<int> MakeMyObservable(IRemoteWebAPI myApi)
+        public async Task<IObservable<int>> MakeMyObservable(IRemoteWebAPI myApi)
         {
             IObservable<int> result = new int[] { }.ToObservable();
-            var latest = myApi.GetLatestValues().ToObservable();
+            var latest = await myApi.GetLatestValues();
             var newer = myApi.SubscribeToNewValues();
-
-            var hotSource = Observable.Publish(latest);
-
-            hotSource.Subscribe(
-                ints =>
-                    {
-                        var tmp = ints.ToObservable();
-                        result = tmp.Concat(newer);
-                    });
-            hotSource.Connect();
-
-            return result;
+            return latest.ToObservable().Concat(newer);
         }
 
         public async Task<int[]> GetInts()
