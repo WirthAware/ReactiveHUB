@@ -1,0 +1,7 @@
+<StyleCopSettings Version="105">
+  <GlobalSettings>
+    <CollectionProperty Name="RecognizedWords">
+      <Value>OAuth</Value>
+    </CollectionProperty>
+  </GlobalSettings>
+</StyleCopSettings>

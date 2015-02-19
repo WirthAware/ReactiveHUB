@@ -1,28 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Reactive;
-using System.Reactive.Linq;
-using System.Reactive.Threading.Tasks;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-
-namespace ReactiveHub.Integration.Twitter
+﻿namespace ReactiveHub.Integration.Twitter
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Globalization;
+    using System.IO;
+    using System.Linq;
+    using System.Net;
+    using System.Reactive;
+    using System.Reactive.Linq;
+    using System.Reactive.Threading.Tasks;
+    using System.Text;
+    using System.Threading;
+    using System.Threading.Tasks;
+
     public class UserContext : ApplicationContext
     {
-        private bool isStreaming;
-
         private readonly OAuthManager manager;
+
+        private bool isStreaming;
 
         public UserContext(string consumerToken, string consumerSecret, string userToken, string userSecret)
             : base(consumerToken, consumerSecret)
         {
-            manager = new OAuthManager(Token, Secret, userToken, userSecret);
+            this.manager = new OAuthManager(Token, Secret, userToken, userSecret);
         }
 
         /// <summary>
@@ -33,23 +33,20 @@ namespace ReactiveHub.Integration.Twitter
         /// <returns>A <see cref="Task"/> returning the tweet that has been posted</returns>
         public IObservable<Tweet> PostTweet(string message, Tweet replyTo = null)
         {
-            const string url = "https://api.twitter.com/1.1/statuses/update.json";
+            const string Url = "https://api.twitter.com/1.1/statuses/update.json";
 
             if (replyTo != null && !message.Contains("@" + replyTo.Sender))
             {
-                return PostTweet(message, replyTo.Sender, replyTo);
+                return this.PostTweet(message, replyTo.Sender, replyTo);
             }
 
-            var postFields = new Dictionary<string, string>
-                                                      {
-                                                        {"status", message}
-                                                      };
+            var postFields = new Dictionary<string, string> { { "status", message } };
             if (replyTo != null)
             {
                 postFields.Add("in_reply_to_status_id", replyTo.Id.ToString(CultureInfo.InvariantCulture));
             }
 
-            return SendPost(url, postFields).Select(Tweet.FromJsonString);
+            return this.SendPost(Url, postFields).Select(Tweet.FromJsonString);
 
             /* Old Code
             var authenticationHeader = manager.GenerateAuthzHeader(
@@ -169,65 +166,61 @@ namespace ReactiveHub.Integration.Twitter
              * REVIEW:
              * - response is not disposed
              * - reader is not disposed
-             * - will the endless Observable.Generate terminate when I unsubscribe?
-             */ 
+             * - will the endless Observable.Generate terminate when I unsubscribe? -> NO!
+             */
             return request.GetResponseAsync()
                 .ToObservable()
                 .Select(response => new StreamReader(response.GetResponseStream()))
-                .Select(reader => Observable.Generate(-1, _ => true, _ => reader.Read(), x => x))
+                .Select(reader => Observable.Generate(string.Empty, _ => true, _ => reader.ReadLine(), x => x))
                 .Merge()
-                .Where(nextChar => nextChar != -1)
-                .Select(nextChar => (char) nextChar)
-                .Aggregate(string.Empty, (head, nextChar) => head + nextChar, x => x)
-                .Where(buffer => buffer.EndsWith("\r\n"))
-                .Where(buffer => buffer != "\r\n")
+                .Where(buffer => !string.IsNullOrWhiteSpace(buffer))
                 .Select(Tweet.FromJsonString);
 
-/* Old non-reactive code, this snippet is based on:
-            request.BeginGetResponse(
-              result =>
-              {
-                  try
-                  {
-                      using (var response = request.EndGetResponse(result))
-                      {
-                          using (var reader = new StreamReader(response.GetResponseStream()))
+            /* Old non-reactive code, this snippet is based on:
+                        request.BeginGetResponse(
+                          result =>
                           {
-                              var buffer = string.Empty;
-                              var nextChar = reader.Read();
-                              while (nextChar != -1 && !cancellationToken.IsCancellationRequested)
+                              try
                               {
-                                  buffer += (char)nextChar;
-                                  Trace.Write((char)nextChar);
-
-                                  if (buffer.EndsWith("\r\n"))
+                                  using (var response = request.EndGetResponse(result))
                                   {
-                                      if (buffer != "\r\n")
+                                      using (var reader = new StreamReader(response.GetResponseStream()))
                                       {
-                                          try
+                                          var buffer = string.Empty;
+                                          var nextChar = reader.Read();
+                                          while (nextChar != -1 && !cancellationToken.IsCancellationRequested)
                                           {
-                                              callback(Tweet.FromJsonString(buffer));
-                                          }
-                                          catch (Exception e)
-                                          {
-                                              Trace.WriteLine("Exception in Tweet callback: " + e.Message);
+                                              buffer += (char)nextChar;
+                                              Trace.Write((char)nextChar);
+
+                                              if (buffer.EndsWith("\r\n"))
+                                              {
+                                                  if (buffer != "\r\n")
+                                                  {
+                                                      try
+                                                      {
+                                                          callback(Tweet.FromJsonString(buffer));
+                                                      }
+                                                      catch (Exception e)
+                                                      {
+                                                          Trace.WriteLine("Exception in Tweet callback: " + e.Message);
+                                                      }
+                                                  }
+
+                                                  buffer = string.Empty;
+                                              }
+
+                                              nextChar = reader.Read();
                                           }
                                       }
-
-                                      buffer = string.Empty;
                                   }
-
-                                  nextChar = reader.Read();
                               }
-                          }
-                      }
-                  }
-                  finally
-                  {
-                      isStreaming = false;
-                  }
-              },
-              null);*/
+                              finally
+                              {
+                                  isStreaming = false;
+                              }
+                          },
+                          null);*/
         }
 
         protected override IObservable<string> SendRequest(string url)
@@ -267,10 +260,17 @@ namespace ReactiveHub.Integration.Twitter
 
         private static string ReadResponseContent(WebResponse response)
         {
-            using (response)
-            using (var reader = new StreamReader(response.GetResponseStream()))
+            using (var stream = response.GetResponseStream())
             {
-                return reader.ReadToEnd();
+                if (!stream.CanRead)
+                {
+                    return string.Empty;
+                }
+
+                using (var reader = new StreamReader(stream))
+                {
+                    return reader.ReadToEnd();
+                }
             }
         }
     }
