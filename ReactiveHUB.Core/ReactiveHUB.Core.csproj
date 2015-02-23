@@ -36,7 +36,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="WebRequests\IWebRequest.cs" />
+    <Compile Include="WebRequests\IWebRequestService.cs" />
     <Compile Include="WebRequests\IWebResponse.cs" />
+    <Compile Include="WebRequests\WebReqestExtensions.cs" />
     <Compile Include="WebRequests\WebRequest.cs" />
     <Compile Include="Helpers\ObservableExtensions.cs" />
     <Compile Include="IIntegration.cs" />
@@ -45,6 +47,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ViewModels\MessageItemViewModel.cs" />
     <Compile Include="ViewModels\MessagesViewModel.cs" />
+    <Compile Include="WebRequests\WebRequestData.cs" />
+    <Compile Include="WebRequests\WebRequestService.cs" />
     <Compile Include="WebRequests\WebResponse.cs" />
   </ItemGroup>
   <ItemGroup>

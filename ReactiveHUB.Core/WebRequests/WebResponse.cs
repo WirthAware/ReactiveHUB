@@ -4,6 +4,9 @@
     using System.IO;
     using System.Net;
 
+    /// <summary>
+    /// An internal implementation of <see cref="IWebResponse"/> wrapping the <see cref="System.Net.WebResponse"/>
+    /// </summary>
     public class WebResponse : IWebResponse
     {
         private readonly System.Net.WebResponse res;

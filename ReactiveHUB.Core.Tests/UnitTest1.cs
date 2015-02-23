@@ -1,5 +1,7 @@
 ﻿namespace ReactiveHUB.Core.Tests
 {
+    using System.Reactive;
+    using System.Reactive.Disposables;
     using System.Reactive.Linq;
     using System.Reactive.Threading.Tasks;
     using System.Threading.Tasks;
@@ -33,6 +35,22 @@
 
             // I want first all the values returned from the async call, followed by everything that the stream returns
             CollectionAssert.AreEqual(new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }, items);
+        }
+
+        [TestMethod]
+        public void WhenOnCompletedIsCalledSubscriptionsAreDisposedByReactiveExtensions()
+        {
+            var called = false;
+            var observable = Observable.Create<Unit>(
+                observer =>
+                    {
+                        observer.OnCompleted();
+                        return Disposable.Create(() => called = true);
+                    });
+
+            observable.Subscribe(_ => { }, () => { });
+
+            Assert.IsTrue(called);
         }
 
         public async Task<IObservable<int>> MakeMyObservable(IRemoteWebAPI myApi)

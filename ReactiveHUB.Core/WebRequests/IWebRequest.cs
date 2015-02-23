@@ -1,7 +1,9 @@
 ﻿namespace ProjectTemplate.WebRequests
 {
     using System;
+    using System.IO;
     using System.Net;
+    using System.Threading.Tasks;
 
     /// <summary>
     /// An interface for <see cref="System.Net.WebRequest"/>, so it can be mocked
@@ -19,5 +21,11 @@
         Uri RequestUri { get; }
 
         bool UseDefaultCredentials { get; set; }
+
+        void Abort();
+
+        Task<Stream> GetRequestStream();
+
+        Task<IWebResponse> GetResponse();
     }
 }

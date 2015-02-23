@@ -4,6 +4,9 @@
     using System.IO;
     using System.Net;
 
+    /// <summary>
+    /// An interface for <see cref="System.Net.WebResponse"/>, so it can be mocked
+    /// </summary>
     public interface IWebResponse : IDisposable
     {
         long ContentLength { get; }
