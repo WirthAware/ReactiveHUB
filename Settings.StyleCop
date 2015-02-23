@@ -2,6 +2,7 @@
   <GlobalSettings>
     <CollectionProperty Name="RecognizedWords">
       <Value>OAuth</Value>
+      <Value>Coursera</Value>
     </CollectionProperty>
   </GlobalSettings>
 </StyleCopSettings>
