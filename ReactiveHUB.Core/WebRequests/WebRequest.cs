@@ -25,6 +25,7 @@
             {
                 return this.req.ContentType;
             }
+
             set
             {
                 this.req.ContentType = value;
@@ -37,6 +38,7 @@
             {
                 return this.req.Credentials;
             }
+
             set
             {
                 this.req.Credentials = value;
@@ -49,6 +51,7 @@
             {
                 return this.req.Headers;
             }
+
             set
             {
                 this.req.Headers = value;
@@ -61,6 +64,7 @@
             {
                 return this.req.Method;
             }
+
             set
             {
                 this.req.Method = value;
@@ -81,6 +85,7 @@
             {
                 return this.req.UseDefaultCredentials;
             }
+
             set
             {
                 this.req.UseDefaultCredentials = value;
