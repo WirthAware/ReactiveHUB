@@ -19,5 +19,27 @@
             this.DataToSend = dataToSend;
             this.Service = service;
         }
+
+        public bool Equals(WebRequestData other)
+        {
+            return Equals(RequestFactory, other.RequestFactory) && Equals(DataToSend, other.DataToSend) && Equals(Service, other.Service);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            return obj is WebRequestData && Equals((WebRequestData) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = (RequestFactory != null ? RequestFactory.GetHashCode() : 0);
+                hashCode = (hashCode*397) ^ (DataToSend != null ? DataToSend.GetHashCode() : 0);
+                hashCode = (hashCode*397) ^ (Service != null ? Service.GetHashCode() : 0);
+                return hashCode;
+            }
+        }
     }
 }

@@ -1,0 +1,46 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReactiveHUB.Core", "ReactiveHUB.Core\ReactiveHUB.Core.csproj", "{04039EF0-4288-430F-8C8B-F62FA4EB7BB2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReactiveHUB.Core.Tests", "ReactiveHUB.Core.Tests\ReactiveHUB.Core.Tests.csproj", "{8EE319FB-E674-4A8B-832E-2D93B9E35711}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReactiveHub.Integration.Twitter", "ReactiveHub.Integration.Twitter\ReactiveHub.Integration.Twitter.csproj", "{BED05D94-5700-44B2-9271-19E96816ACE0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleClient.Integration.Twitter", "ConsoleClient.Integration.Twitter\ConsoleClient.Integration.Twitter.csproj", "{56C24F62-8753-480A-A878-DD2F8E53C942}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReactiveHub.Integration.Twitter.Tests", "ReactiveHub.Integration.Twitter.Tests\ReactiveHub.Integration.Twitter.Tests.csproj", "{38A7DC49-1F0C-45CE-A474-334F7C2FBFD0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{04039EF0-4288-430F-8C8B-F62FA4EB7BB2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{04039EF0-4288-430F-8C8B-F62FA4EB7BB2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{04039EF0-4288-430F-8C8B-F62FA4EB7BB2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{04039EF0-4288-430F-8C8B-F62FA4EB7BB2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8EE319FB-E674-4A8B-832E-2D93B9E35711}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8EE319FB-E674-4A8B-832E-2D93B9E35711}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8EE319FB-E674-4A8B-832E-2D93B9E35711}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8EE319FB-E674-4A8B-832E-2D93B9E35711}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BED05D94-5700-44B2-9271-19E96816ACE0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BED05D94-5700-44B2-9271-19E96816ACE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BED05D94-5700-44B2-9271-19E96816ACE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BED05D94-5700-44B2-9271-19E96816ACE0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{56C24F62-8753-480A-A878-DD2F8E53C942}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{56C24F62-8753-480A-A878-DD2F8E53C942}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{56C24F62-8753-480A-A878-DD2F8E53C942}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{56C24F62-8753-480A-A878-DD2F8E53C942}.Release|Any CPU.Build.0 = Release|Any CPU
+		{38A7DC49-1F0C-45CE-A474-334F7C2FBFD0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{38A7DC49-1F0C-45CE-A474-334F7C2FBFD0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{38A7DC49-1F0C-45CE-A474-334F7C2FBFD0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{38A7DC49-1F0C-45CE-A474-334F7C2FBFD0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

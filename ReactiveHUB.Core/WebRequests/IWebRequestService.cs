@@ -26,5 +26,7 @@ namespace ProjectTemplate.WebRequests
             WebRequestData data,
             Encoding encoding = null,
             IScheduler sched = null);
+
+        WebRequestData CreatePost(Uri uri, string data, Dictionary<string, string> headers = null, Encoding encoding = null);
     }
 }

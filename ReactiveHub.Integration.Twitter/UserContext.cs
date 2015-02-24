@@ -1,4 +1,6 @@
-﻿namespace ReactiveHub.Integration.Twitter
+﻿using ProjectTemplate.WebRequests;
+
+namespace ReactiveHub.Integration.Twitter
 {
     using System;
     using System.Collections.Generic;
@@ -19,8 +21,8 @@
 
         private bool isStreaming;
 
-        public UserContext(string consumerToken, string consumerSecret, string userToken, string userSecret)
-            : base(consumerToken, consumerSecret)
+        public UserContext(string consumerToken, string consumerSecret, string userToken, string userSecret, IWebRequestService webRequestService)
+            : base(consumerToken, consumerSecret, webRequestService)
         {
             this.manager = new OAuthManager(Token, Secret, userToken, userSecret);
         }

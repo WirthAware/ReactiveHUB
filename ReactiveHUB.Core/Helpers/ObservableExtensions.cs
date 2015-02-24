@@ -1,4 +1,6 @@
-﻿namespace ProjectTemplate.Helpers
+﻿using System.Reactive.Threading.Tasks;
+
+namespace ProjectTemplate.Helpers
 {
     using System;
     using System.Threading.Tasks;
@@ -24,6 +26,18 @@
         public static async Task<TOut> Then<TIn, TOut>(this Task<TIn> self, Func<TIn, TOut> modifier)
         {
             return modifier(await self);
+        }
+
+        /// <summary>
+        /// Subscribes to the result of a task, combining <see cref="IObserver{T}.OnCompleted"/> and <see cref="IObserver{T}.OnNext"/>, since only a single result is expected.
+        /// </summary>
+        /// <typeparam name="T">The result type</typeparam>
+        /// <param name="self">The task to subscribe to</param>
+        /// <param name="onComplete">The callback to execute when the task finished successfully</param>
+        /// <param name="onError">The callback to execute when the task finished with an exception</param>
+        public static void Subscribe<T>(this Task<T> self, Action<T> onComplete, Action<Exception> onError)
+        {
+            self.ToObservable().Subscribe(onComplete, onError);
         }
 
         /// <summary>

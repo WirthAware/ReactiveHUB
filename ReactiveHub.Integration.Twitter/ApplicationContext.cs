@@ -3,20 +3,21 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Net;
 using System.Reactive;
+using System.Reactive.Concurrency;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using System.Text;
 using System.Web;
 using System.Web.Script.Serialization;
+using ProjectTemplate.WebRequests;
 
 namespace ReactiveHub.Integration.Twitter
 {
     public class ApplicationContext : IDisposable
     {
-        public string Token { get; private set; }
-
-        public string Secret { get; private set; }
+        protected readonly IWebRequestService WebRequestService;
 
         /// <summary>
         /// The bearer token is the authentication token when authenticating as application
@@ -28,16 +29,24 @@ namespace ReactiveHub.Integration.Twitter
         /// </summary>
         /// <param name="token">The OAuth token for application authentication.</param>
         /// <param name="secret">The secret for the token.</param>
-        public ApplicationContext(string token, string secret)
+        /// <param name="webRequestService">The service to use for making web requests</param>
+        public ApplicationContext(string token, string secret, IWebRequestService webRequestService)
         {
+            WebRequestService = webRequestService;
+
             Token = token;
             Secret = secret;
+
             FetchBearerToken();
         }
 
+        public string Token { get; private set; }
+
+        public string Secret { get; private set; }
+
         public UserContext CreateUserContext(string userToken, string userSecret)
         {
-            return new UserContext(Token, Secret, userToken, userSecret);
+            return new UserContext(Token, Secret, userToken, userSecret, WebRequestService);
         }
 
         /// <summary>
@@ -79,29 +88,34 @@ namespace ReactiveHub.Integration.Twitter
         /// <param name="queryString">The term to search for</param>
         /// <param name="initialTweetSinceId">If present all tweets that are earlier than the tweet specified by this Id are excluded from the search results</param>
         /// <param name="interval">The interval between two searches. It has a minimum of 10s</param>
-        public IObservable<Tweet> Poll(string queryString, long initialTweetSinceId, TimeSpan interval)
+        /// <param name="scheduler">The scheduler to schedule the polling on</param>
+        public IObservable<Tweet> Poll(string queryString, long initialTweetSinceId, TimeSpan interval, IScheduler scheduler = null)
         {
             if (interval < TimeSpan.FromSeconds(10))
             {
                 throw new ArgumentOutOfRangeException("interval", "Intervals below 10s are not allowed.");
             }
 
-            // REVIEW: Is this correct? o.O - I need to send the highest TweedId from the previous searches with each request
-
-            var recentId = initialTweetSinceId;
-
             return Observable
-                .Interval(interval)
-                .Select(_ =>
+                .Create<Tweet>(observer =>
                 {
-                    var search = Search(queryString, recentId);
+                    var t = new MultipleAssignmentDisposable();
 
-                    // Update recent id when the search is finished
-                    search.Aggregate(recentId, (l, tweet) => Math.Max(l, tweet.Id)).Subscribe(i => recentId = i);
+                    var recentId = initialTweetSinceId;
 
-                    return search;
-                })
-                .Merge();
+                    Action doSearch = null; 
+                    doSearch = () =>
+                    {
+                        t.Disposable = Search(queryString, recentId).Subscribe(observer.OnNext, observer.OnError, () =>
+                        {
+                            t.Disposable = scheduler.Schedule(interval, doSearch);
+                        });
+                    };
+
+                    t.Disposable = scheduler.Schedule(doSearch);
+
+                    return t;
+                });
         }
 
         /// <summary>
@@ -123,7 +137,7 @@ namespace ReactiveHub.Integration.Twitter
         {
             if (disposing)
             {
-                InvalidateBearerTokenAsync().Wait();
+                InvalidateBearerToken().Wait();
             }
 
             // Release unmanaged resources here
@@ -131,59 +145,49 @@ namespace ReactiveHub.Integration.Twitter
 
         protected virtual IObservable<string> SendRequest(string url)
         {
-            return bearerToken.Select(token =>
-            {
-                var client1 = new WebClient();
-                client1.Headers.Add("Authorization", "Bearer " + token);
-                var result1 = Observable
-                    .FromEvent<DownloadStringCompletedEventHandler, DownloadStringCompletedEventArgs>(
-                        handler => client1.DownloadStringCompleted += handler,
-                        handler => client1.DownloadStringCompleted -= handler)
-                    .Select(args => args.Result)
-                    .FirstAsync();
-                client1.DownloadStringAsync(new Uri(url));
-
-                return result1;
-            }).Merge();
+            return bearerToken.SelectMany(token => WebRequestService
+                .CreateGet(
+                    new Uri(url),
+                    new Dictionary<string, string> {{"Authorization", "Bearer " + token}})
+                .SendAndReadAllText());
         }
 
         private void FetchBearerToken()
         {
             var base64Credentials = CombineApiKey();
 
-            var client = new WebClient();
-            client.Headers.Add("Authorization", "Basic " + base64Credentials);
-            bearerToken = Observable
-                .FromEvent<UploadStringCompletedEventHandler, UploadStringCompletedEventArgs>(
-                    handler => client.UploadStringCompleted += handler,
-                    handler => client.UploadStringCompleted -= handler)
-                .Select<UploadStringCompletedEventArgs, string>(args =>
+            var bearerTokenSubject = new AsyncSubject<string>();
+
+            bearerToken = bearerTokenSubject;
+
+            WebRequestService.CreatePost(
+                new Uri("https://api.twitter.com/oauth2/token?grant_type=client_credentials"),
+                "grant_type=client_credentials", new Dictionary<string, string>
+                {
+                    {
+                        "Authorization", "Basic " + base64Credentials
+                    }
+                }).SendAndReadAllText()
+                .Select(data =>
                 {
                     var serializer = new JavaScriptSerializer();
-                    var json = serializer.Deserialize<Dictionary<string, object>>(args.Result);
+                    var json = serializer.Deserialize<Dictionary<string, object>>(data);
 
-                    return (string)json["access_token"];
-                }).FirstAsync();
-
-            client.UploadStringAsync(new Uri("https://api.twitter.com/oauth2/token"), "grant_type=client_credentials");
+                    return (string) json["access_token"];
+                }).Subscribe(bearerTokenSubject);
         }
 
-        private IObservable<Unit> InvalidateBearerTokenAsync()
+        private IObservable<Unit> InvalidateBearerToken()
         {
-            return bearerToken.Select(token =>
-            {
-                var client = new WebClient();
-                client.Headers.Add("Authorization", "Basic " + CombineApiKey());
-                var result = Observable
-                    .FromEvent<UploadStringCompletedEventHandler, UploadStringCompletedEventArgs>(
-                        handler => client.UploadStringCompleted += handler,
-                        handler => client.UploadStringCompleted -= handler)
-                    .Select(args => Unit.Default)
-                    .FirstAsync();
-                client.UploadString("https://api.twitter.com/oauth2/invalidate_token", "access_token=" + token);
-                return result;
-            })
-            .Merge();
+            return bearerToken
+                .SelectMany(token =>
+                    WebRequestService
+                        .CreatePost(
+                            new Uri("https://api.twitter.com/oauth2/invalidate_token?access_token=" + token),
+                            string.Empty,
+                            new Dictionary<string, string> { { "Authorization", "Basic " + CombineApiKey() } })
+                        .Send());
+
         }
 
         private string CombineApiKey()
@@ -198,14 +202,13 @@ namespace ReactiveHub.Integration.Twitter
         private IObservable<Tweet> SearchInternal(string url)
         {
             return SendRequest(url)
-                .Select(reply =>
+                .SelectMany(reply =>
                 {
                     var json = new JavaScriptSerializer().Deserialize<Dictionary<string, object>>(reply);
                     var statuses = ((ArrayList)json["statuses"]).OfType<Dictionary<string, object>>();
 
                     return statuses.Select(Tweet.FromJsonObject).ToObservable();
-                })
-                .Merge();
+                });
         }
     }
 }
