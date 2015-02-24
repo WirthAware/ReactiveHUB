@@ -7,6 +7,7 @@
     using System.Reactive.Concurrency;
     using System.Reactive.Disposables;
     using System.Reactive.Linq;
+    using System.Text;
 
     using ProjectTemplate.Helpers;
 
@@ -50,24 +51,106 @@
         public WebRequestData CreateGet(Uri uri, Dictionary<string, string> headers = null)
         {
             return this.Create(
-                uri, 
+                uri,
                 r =>
-                    {
-                        r.Method = "GET";
+                {
+                    r.Method = "GET";
 
-                        if (headers != null)
+                    if (headers != null)
+                    {
+                        foreach (var header in headers)
                         {
-                            foreach (var header in headers)
-                            {
-                                r.Headers[header.Key] = header.Value;
-                            }
+                            r.Headers[header.Key] = header.Value;
                         }
-                    });
+                    }
+                });
         }
 
         public IObservable<Unit> Send(WebRequestData data, IScheduler sched = null)
         {
             return this.SendAndReceive<Unit, Unit>(data, DoNotReceive, null, sched);
+        }
+
+        public IObservable<byte> SendAndReadBytewise(WebRequestData data, bool stopAtEndOfStream = false, IScheduler sched = null)
+        {
+            return this.SendAndReceive<byte, Stream>(data, FetchResponseStream, (stream, observer) => ReadByte(stream, observer, stopAtEndOfStream), sched);
+        }
+
+        public IObservable<string> SendAndReadLinewise(WebRequestData data, Encoding encoding = null, bool stopAtEndOfStream = false, IScheduler sched = null)
+        {
+            if (encoding == null)
+            {
+                encoding = Encoding.UTF8;
+            }
+
+            return this.SendAndReceive<string, StreamReader>(
+                data,
+                (response, observer, d) => FetchResponseReader(response, observer, d, encoding),
+                (reader, observer) =>
+                {
+                    if (reader.EndOfStream && stopAtEndOfStream)
+                    {
+                        observer.OnCompleted();
+                    }
+                    else
+                    {
+                        observer.OnNext(reader.ReadLine());
+                    }
+                }, 
+                sched);
+        }
+
+        public IObservable<string> SendAndReadAllText(
+            WebRequestData data,
+            Encoding encoding = null,
+            IScheduler sched = null)
+        {
+            if (encoding == null)
+            {
+                encoding = Encoding.UTF8;
+            }
+
+            return this.SendAndReceive<string, StreamReader>(
+                data,
+                (response, observer, d) => FetchResponseReader(response, observer, d, encoding),
+                (reader, observer) => reader.ReadToEnd(), 
+                sched);
+        }
+
+        private static void ReadByte(Stream stream, IObserver<byte> observer, bool stopAtEndOfStream)
+        {
+            var result = stream.ReadByte();
+            if (result != -1)
+            {
+                observer.OnNext((byte)result);
+            }
+            else
+            {
+                if (stopAtEndOfStream)
+                {
+                    observer.OnCompleted();
+                }
+            }
+        }
+
+        private static StreamReader FetchResponseReader<T>(IWebResponse response, IObserver<T> observer, CompositeDisposable d, Encoding encoding)
+        {
+            var result = new StreamReader(response.GetResponseStream(), encoding);
+
+            // Dispose the reader when done
+            d.Add(result);
+
+            return result;
+        }
+
+        private static Stream FetchResponseStream(IWebResponse response, IObserver<byte> observer, CompositeDisposable d)
+        {
+            var result = response.GetResponseStream();
+
+            // Dispose the stream when done
+            d.Add(result);
+
+            return result;
         }
 
         private static Unit DoNotReceive(IWebResponse webResponse, IObserver<Unit> observer, CompositeDisposable d)
@@ -77,9 +160,9 @@
         }
 
         private IObservable<T> SendAndReceive<T, TReceiveOn>(
-            WebRequestData data, 
-            Func<IWebResponse, IObserver<T>, CompositeDisposable, TReceiveOn> transformation, 
-            Action<TReceiveOn, IObserver<T>> receiveStep, 
+            WebRequestData data,
+            Func<IWebResponse, IObserver<T>, CompositeDisposable, TReceiveOn> transformation,
+            Action<TReceiveOn, IObserver<T>> receiveStep,
             IScheduler sched = null)
         {
             if (sched == null)
@@ -89,83 +172,83 @@
 
             return Observable.Create<T>(
                 observer =>
-                    {
-                        var t = new MultipleAssignmentDisposable();
-                        var res = new CompositeDisposable(new IDisposable[] { t });
-                        IWebRequest req = null;
+                {
+                    var t = new MultipleAssignmentDisposable();
+                    var res = new CompositeDisposable(new IDisposable[] { t });
+                    IWebRequest req = null;
 
-                        // Steps 6+: Run the receiveStep function in a loop until the subscription is disposed
-                        Action<TReceiveOn> doReceiveStep = null;
-                        doReceiveStep = receiveOn =>
+                    // Steps 6+: Run the receiveStep function in a loop until the subscription is disposed
+                    Action<TReceiveOn> doReceiveStep = null;
+                    doReceiveStep = receiveOn =>
+                        {
+                            receiveStep(receiveOn, observer);
+                            t.Disposable = sched.Schedule(() => doReceiveStep(receiveOn));
+                        };
+
+                    // Step 5: Apply the given transformation on the stream and skip steps 6+ if no receive step function is given
+                    Action<IWebResponse> prepareReceive = r =>
+                        {
+                            var receiveOn = transformation(r, observer, res);
+                            if (receiveStep != null)
                             {
-                                receiveStep(receiveOn, observer);
                                 t.Disposable = sched.Schedule(() => doReceiveStep(receiveOn));
-                            };
-
-                        // Step 5: Apply the given transformation on the stream and skip steps 6+ if no receive step function is given
-                        Action<IWebResponse> prepareReceive = r =>
+                            }
+                            else
                             {
-                                var receiveOn = transformation(r, observer, res);
-                                if (receiveStep != null)
-                                {
-                                    t.Disposable = sched.Schedule(() => doReceiveStep(receiveOn));
-                                }
-                                else
-                                {
-                                    observer.OnCompleted();
-                                }
-                            };
+                                observer.OnCompleted();
+                            }
+                        };
 
-                        // Step 4: Get the response and the response stream
-                        Action getResponseStream = () => req.GetResponse().Then(
-                            r =>
-                                {
-                                    res.Add(r);
-                                    t.Disposable = sched.Schedule(() => prepareReceive(r));
-                                    return Unit.Default;
-                                });
+                    // Step 4: Get the response and the response stream
+                    Action getResponseStream = () => req.GetResponse().Then(
+                        r =>
+                        {
+                            res.Add(r);
+                            t.Disposable = sched.Schedule(() => prepareReceive(r));
+                            return Unit.Default;
+                        });
 
-                        // Step 3: Send the data and get the response
-                        Action<Stream> sendData = s =>
+                    // Step 3: Send the data and get the response
+                    Action<Stream> sendData = s =>
+                        {
+                            // Don't dispose the stream while sending data!
+                            using (s)
                             {
-                                // Don't dispose the stream while sending data!
-                                using (s)
-                                {
-                                    s.Write(data.DataToSend, 0, data.DataToSend.Length);
-                                }
+                                s.Write(data.DataToSend, 0, data.DataToSend.Length);
+                            }
 
+                            getResponseStream();
+                        };
+
+                    // Step 2: Get the request stream and schedule sending the data
+                    Action getRequestStream = () => req.GetRequestStream().Then(
+                        s =>
+                        {
+                            // The stream needs to be disposed when the scheduled SendData is never executed
+                            res.Add(s);
+                            t.Disposable = sched.Schedule(() => sendData(s));
+                            return Unit.Default;
+                        });
+
+                    // Step 1: Create the request and decide whether to send data or get the response immediately (= Skip steps 2 & 3)
+                    Action createRequest = () =>
+                        {
+                            req = data.RequestFactory();
+
+                            if (data.DataToSend != null)
+                            {
+                                getRequestStream();
+                            }
+                            else
+                            {
                                 getResponseStream();
-                            };
+                            }
+                        };
 
-                        // Step 2: Get the request stream and schedule sending the data
-                        Action getRequestStream = () => req.GetRequestStream().Then(
-                            s =>
-                                {
-                                    // The stream needs to be disposed when the scheduled SendData is never executed
-                                    res.Add(s);
-                                    t.Disposable = sched.Schedule(() => sendData(s));
-                                    return Unit.Default;
-                                });
+                    t.Disposable = sched.Schedule(createRequest);
 
-                        // Step 1: Create the request and decide whether to send data or get the response immediately (= Skip steps 2 & 3)
-                        Action createRequest = () =>
-                            {
-                                req = data.RequestFactory();
-
-                                if (data.DataToSend != null)
-                                {
-                                    getRequestStream();
-                                }
-                                else
-                                {
-                                    getResponseStream();
-                                }
-                            };
-
-                        t.Disposable = sched.Schedule(createRequest);
-
-                        return res;
-                    });
+                    return res;
+                });
         }
     }
 }

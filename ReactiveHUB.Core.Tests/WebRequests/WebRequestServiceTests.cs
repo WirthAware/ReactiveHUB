@@ -3,6 +3,7 @@
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Text;
     using System.Threading.Tasks;
 
     using Microsoft.Reactive.Testing;
@@ -17,15 +18,11 @@
     [TestClass]
     public class WebRequestServiceTests
     {
-        private static readonly Uri RequestUri;
+        private static readonly Uri RequestUri = new Uri("http://www.google.com");
 
-        private static readonly byte[] TestData;
+        private static readonly byte[] TestData = { 1, 2, 3, 4, 5 };
 
-        static WebRequestServiceTests()
-        {
-            RequestUri = new Uri("http://www.google.com");
-            TestData = new byte[] { 1, 2, 3, 4, 5 };
-        }
+        private static readonly string TestResponse = "123\r\n456\r\n789";
 
         [TestMethod]
         public void GenericCreateInvokesCallbacksAndFillsData()

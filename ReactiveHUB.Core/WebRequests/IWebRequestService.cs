@@ -4,6 +4,7 @@ namespace ProjectTemplate.WebRequests
     using System.Collections.Generic;
     using System.Reactive;
     using System.Reactive.Concurrency;
+    using System.Text;
 
     /// <summary>
     /// A service for creating and making web requests. 
@@ -16,5 +17,14 @@ namespace ProjectTemplate.WebRequests
         WebRequestData CreateGet(Uri uri, Dictionary<string, string> headers = null);
 
         IObservable<Unit> Send(WebRequestData data, IScheduler sched = null);
+
+        IObservable<byte> SendAndReadBytewise(WebRequestData data, bool stopAtEndOfStream = false, IScheduler sched = null);
+
+        IObservable<string> SendAndReadLinewise(WebRequestData data, Encoding encoding = null, bool stopAtEndOfStream = false, IScheduler sched = null);
+
+        IObservable<string> SendAndReadAllText(
+            WebRequestData data,
+            Encoding encoding = null,
+            IScheduler sched = null);
     }
 }
