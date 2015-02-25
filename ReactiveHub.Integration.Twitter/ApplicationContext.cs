@@ -77,9 +77,10 @@ namespace ReactiveHub.Integration.Twitter
         /// </summary>
         /// <param name="queryString">The term to search for</param>
         /// <param name="interval">The interval between two searches. It has a minimum of 10s</param>
-        public IObservable<Tweet> Poll(string queryString, TimeSpan interval)
+        /// <param name="scheduler">The scheduler to schedule the polling on</param>
+        public IObservable<Tweet> Poll(string queryString, TimeSpan interval, IScheduler scheduler = null)
         {
-            return Poll(queryString, 0, interval);
+            return Poll(queryString, 0, interval, scheduler);
         }
 
         /// <summary>
@@ -99,22 +100,44 @@ namespace ReactiveHub.Integration.Twitter
             return Observable
                 .Create<Tweet>(observer =>
                 {
+                    var b = new BooleanDisposable();
                     var t = new MultipleAssignmentDisposable();
+                    var res = new CompositeDisposable(new IDisposable[] {b, t});
 
                     var recentId = initialTweetSinceId;
+
+                    Action<Tweet> tweetReceived = tweet =>
+                    {
+                        observer.OnNext(tweet);
+                        recentId = Math.Max(recentId, tweet.Id);
+                    };
 
                     Action doSearch = null; 
                     doSearch = () =>
                     {
-                        t.Disposable = Search(queryString, recentId).Subscribe(observer.OnNext, observer.OnError, () =>
+                        if (b.IsDisposed)
                         {
-                            t.Disposable = scheduler.Schedule(interval, doSearch);
+                            observer.OnCompleted();
+                            return;
+                        }
+
+                        t.Disposable = Search(queryString, recentId).Subscribe(tweetReceived, observer.OnError, () =>
+                        {
+                            if (!b.IsDisposed)
+                            {
+                                t.Disposable = scheduler.Schedule(interval, doSearch);
+                            }
+                            else
+                            {
+                                observer.OnCompleted();
+                            }
                         });
                     };
 
+
                     t.Disposable = scheduler.Schedule(doSearch);
 
-                    return t;
+                    return res;
                 });
         }
 
