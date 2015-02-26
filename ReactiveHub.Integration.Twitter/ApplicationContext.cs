@@ -37,7 +37,7 @@ namespace ReactiveHub.Integration.Twitter
             Token = token;
             Secret = secret;
 
-            FetchBearerToken();
+            Initialize();
         }
 
         public string Token { get; private set; }
@@ -175,7 +175,7 @@ namespace ReactiveHub.Integration.Twitter
                 .SendAndReadAllText());
         }
 
-        private void FetchBearerToken()
+        protected virtual void Initialize()
         {
             var base64Credentials = CombineApiKey();
 

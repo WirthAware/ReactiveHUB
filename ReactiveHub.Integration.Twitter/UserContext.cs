@@ -27,6 +27,16 @@ namespace ReactiveHub.Integration.Twitter
             this.manager = new OAuthManager(Token, Secret, userToken, userSecret);
         }
 
+        protected override void Initialize()
+        {
+            // No bearer token to fetch
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            // No bearer token to invalidate
+        }
+
         /// <summary>
         /// Sends a tweet to twitter
         /// </summary>
@@ -229,11 +239,9 @@ namespace ReactiveHub.Integration.Twitter
         {
             var authenticationHeader = manager.GenerateAuthzHeader(url, "GET");
 
-            var request = WebRequest.Create(url);
-            request.Method = "GET";
-            request.Headers.Add("Authorization", authenticationHeader);
-
-            return request.GetResponseAsync().ToObservable().Select(ReadResponseContent);
+            return
+                WebRequestService.CreateGet(new Uri(url),
+                    new Dictionary<string, string> {{"Authorization", authenticationHeader}}).SendAndReadAllText();
         }
 
         private IObservable<string> SendPost(string url, Dictionary<string, string> postFields)

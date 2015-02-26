@@ -85,6 +85,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="UserContextTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ReactiveHUB.Core\ReactiveHUB.Core.csproj">
