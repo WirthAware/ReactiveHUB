@@ -1,6 +1,4 @@
-﻿using ProjectTemplate.WebRequests;
-
-namespace ReactiveHub.Integration.Twitter
+﻿namespace ReactiveHub.Integration.Twitter
 {
     using System;
     using System.Collections.Generic;
@@ -13,7 +11,7 @@ namespace ReactiveHub.Integration.Twitter
     using System.Reactive.Threading.Tasks;
     using System.Text;
     using System.Threading;
-    using System.Threading.Tasks;
+    using ProjectTemplate.WebRequests;
 
     public class UserContext : ApplicationContext
     {
@@ -27,22 +25,12 @@ namespace ReactiveHub.Integration.Twitter
             this.manager = new OAuthManager(Token, Secret, userToken, userSecret);
         }
 
-        protected override void Initialize()
-        {
-            // No bearer token to fetch
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            // No bearer token to invalidate
-        }
-
         /// <summary>
         /// Sends a tweet to twitter
         /// </summary>
         /// <param name="message">The message to tweet</param>
         /// <param name="replyTo">If specified the new tweet will be a reply to the specified tweet</param>
-        /// <returns>A <see cref="Task"/> returning the tweet that has been posted</returns>
+        /// <returns>An <see cref="IObservable{Tweet}"/> which will return the tweet that has been posted</returns>
         public IObservable<Tweet> PostTweet(string message, Tweet replyTo = null)
         {
             const string Url = "https://api.twitter.com/1.1/statuses/update.json";
@@ -59,31 +47,6 @@ namespace ReactiveHub.Integration.Twitter
             }
 
             return this.SendPost(Url, postFields).Select(Tweet.FromJsonString);
-
-            /* Old Code
-            var authenticationHeader = manager.GenerateAuthzHeader(
-              url,
-              "POST",
-              postFields);
-
-            var postData = string.Join("&", postFields.Select(x => string.Format("{0}={1}", OAuthManager.PercentEncode(x.Key), OAuthManager.PercentEncode(x.Value))));
-            var request = (HttpWebRequest)WebRequest.Create(url);
-            request.Method = "POST";
-
-            var byteArray = Encoding.UTF8.GetBytes(postData);
-            request.ContentType = "application/x-www-form-urlencoded; charset=utf-8";
-            request.Headers.Add("Authorization", authenticationHeader);
-            request.ContentLength = byteArray.Length;
-            using (var dataStream = request.GetRequestStream())
-            {
-                dataStream.Write(byteArray, 0, byteArray.Length);
-            }
-
-            var response = request.GetResponse();
-            using (var reader = new StreamReader(response.GetResponseStream()))
-            {
-                return Tweet.FromJsonObject(new JavaScriptSerializer().Deserialize<Dictionary<string, object>>(reader.ReadToEnd()));
-            }*/
         }
 
         /// <summary>
@@ -92,6 +55,7 @@ namespace ReactiveHub.Integration.Twitter
         /// <param name="message">The message to tweet</param>
         /// <param name="recipient">The user the tweet should be sent to</param>
         /// <param name="replyTo">If specified the new tweet will be a reply to the specified tweet</param>
+        /// <returns>An <see cref="IObservable{Tweet}"/> which will return the tweet that has been posted</returns>
         public IObservable<Tweet> PostTweet(string message, string recipient, Tweet replyTo = null)
         {
             return PostTweet("@" + recipient + " " + message, replyTo);
@@ -100,12 +64,17 @@ namespace ReactiveHub.Integration.Twitter
         /// <summary>
         /// Likes the given tweet
         /// </summary>
-        /// <param name="tweet">The tweet to like</param>
+        /// <param name="tweet">
+        /// The tweet to like
+        /// </param>
+        /// <returns>
+        /// An <see cref="IObservable{Unit}"/> which calls <see cref="IObserver{T}.OnNext"/> and then completes, once the like has been processed
+        /// </returns>
         public IObservable<Unit> Like(Tweet tweet)
         {
-            const string url = "https://api.twitter.com/1.1/favorites/create.json";
+            const string Url = "https://api.twitter.com/1.1/favorites/create.json";
 
-            return SendPost(url, new Dictionary<string, string>
+            return SendPost(Url, new Dictionary<string, string>
             {
                 {
                     "id",
@@ -233,6 +202,16 @@ namespace ReactiveHub.Integration.Twitter
                               }
                           },
                           null);*/
+        }
+
+        protected override void Initialize()
+        {
+            // No bearer token to fetch
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            // No bearer token to invalidate
         }
 
         protected override IObservable<string> SendRequest(string url)
