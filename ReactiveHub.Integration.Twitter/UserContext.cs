@@ -21,8 +21,8 @@ namespace ReactiveHub.Integration.Twitter
 
         private bool isStreaming;
 
-        public UserContext(string consumerToken, string consumerSecret, string userToken, string userSecret, IWebRequestService webRequestService)
-            : base(consumerToken, consumerSecret, webRequestService)
+        public UserContext(string consumerToken, string consumerSecret, string userToken, string userSecret, IWebRequestService requestService)
+            : base(consumerToken, consumerSecret, requestService)
         {
             this.manager = new OAuthManager(Token, Secret, userToken, userSecret);
         }
@@ -240,7 +240,7 @@ namespace ReactiveHub.Integration.Twitter
             var authenticationHeader = manager.GenerateAuthzHeader(url, "GET");
 
             return
-                WebRequestService.CreateGet(new Uri(url),
+                this.RequestService.CreateGet(new Uri(url),
                     new Dictionary<string, string> {{"Authorization", authenticationHeader}}).SendAndReadAllText();
         }
 
@@ -248,40 +248,19 @@ namespace ReactiveHub.Integration.Twitter
         {
             var authenticationHeader = manager.GenerateAuthzHeader(url, "POST", postFields);
 
+            Action<IWebRequest> configureRequest = r =>
+                {
+                    r.Method = "POST";
+                    r.ContentType = "application/x-www-form-urlencoded; charset=utf-8";
+                    r.Headers["Authorization"] = authenticationHeader;
+                };
+
             var postData = string.Join(
               "&",
               postFields.Select(
                 x => string.Format("{0}={1}", OAuthManager.PercentEncode(x.Key), OAuthManager.PercentEncode(x.Value))));
 
-            var request = (HttpWebRequest)WebRequest.Create(url);
-            request.Method = "POST";
-
-            var byteArray = Encoding.UTF8.GetBytes(postData);
-            request.ContentType = "application/x-www-form-urlencoded; charset=utf-8";
-            request.Headers.Add("Authorization", authenticationHeader);
-            request.ContentLength = byteArray.Length;
-            using (var dataStream = request.GetRequestStream())
-            {
-                dataStream.Write(byteArray, 0, byteArray.Length);
-            }
-
-            return request.GetResponseAsync().ToObservable().Select(ReadResponseContent);
-        }
-
-        private static string ReadResponseContent(WebResponse response)
-        {
-            using (var stream = response.GetResponseStream())
-            {
-                if (!stream.CanRead)
-                {
-                    return string.Empty;
-                }
-
-                using (var reader = new StreamReader(stream))
-                {
-                    return reader.ReadToEnd();
-                }
-            }
+            return this.RequestService.Create(new Uri(url), configureRequest, Encoding.UTF8.GetBytes(postData)).SendAndReadAllText();
         }
     }
 }

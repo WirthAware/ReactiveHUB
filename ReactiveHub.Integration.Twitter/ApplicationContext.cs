@@ -1,23 +1,24 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Reactive;
-using System.Reactive.Concurrency;
-using System.Reactive.Disposables;
-using System.Reactive.Linq;
-using System.Reactive.Subjects;
-using System.Text;
-using System.Web;
-using System.Web.Script.Serialization;
-using ProjectTemplate.WebRequests;
-
-namespace ReactiveHub.Integration.Twitter
+﻿namespace ReactiveHub.Integration.Twitter
 {
+    using System;
+    using System.Collections;
+    using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.Linq;
+    using System.Reactive;
+    using System.Reactive.Concurrency;
+    using System.Reactive.Disposables;
+    using System.Reactive.Linq;
+    using System.Reactive.Subjects;
+    using System.Text;
+    using System.Web;
+    using System.Web.Script.Serialization;
+
+    using ProjectTemplate.WebRequests;
+
     public class ApplicationContext : IDisposable
     {
-        protected readonly IWebRequestService WebRequestService;
+        protected readonly IWebRequestService RequestService;
 
         /// <summary>
         /// The bearer token is the authentication token when authenticating as application
@@ -29,10 +30,10 @@ namespace ReactiveHub.Integration.Twitter
         /// </summary>
         /// <param name="token">The OAuth token for application authentication.</param>
         /// <param name="secret">The secret for the token.</param>
-        /// <param name="webRequestService">The service to use for making web requests</param>
-        public ApplicationContext(string token, string secret, IWebRequestService webRequestService)
+        /// <param name="requestService">The service to use for making web requests</param>
+        public ApplicationContext(string token, string secret, IWebRequestService requestService)
         {
-            WebRequestService = webRequestService;
+            this.RequestService = requestService;
 
             Token = token;
             Secret = secret;
@@ -46,7 +47,7 @@ namespace ReactiveHub.Integration.Twitter
 
         public UserContext CreateUserContext(string userToken, string userSecret)
         {
-            return new UserContext(Token, Secret, userToken, userSecret, WebRequestService);
+            return new UserContext(Token, Secret, userToken, userSecret, this.RequestService);
         }
 
         /// <summary>
@@ -168,10 +169,15 @@ namespace ReactiveHub.Integration.Twitter
 
         protected virtual IObservable<string> SendRequest(string url)
         {
-            return bearerToken.SelectMany(token => WebRequestService
+            return bearerToken.SelectMany(token => this.RequestService
                 .CreateGet(
                     new Uri(url),
-                    new Dictionary<string, string> {{"Authorization", "Bearer " + token}})
+                    new Dictionary<string, string>
+                        {
+                            {
+                                "Authorization", "Bearer " + token
+                            }
+                        })
                 .SendAndReadAllText());
         }
 
@@ -183,7 +189,7 @@ namespace ReactiveHub.Integration.Twitter
 
             bearerToken = bearerTokenSubject;
 
-            WebRequestService.CreatePost(
+            this.RequestService.CreatePost(
                 new Uri("https://api.twitter.com/oauth2/token?grant_type=client_credentials"),
                 "grant_type=client_credentials", new Dictionary<string, string>
                 {
@@ -204,13 +210,17 @@ namespace ReactiveHub.Integration.Twitter
         {
             return bearerToken
                 .SelectMany(token =>
-                    WebRequestService
+                    this.RequestService
                         .CreatePost(
                             new Uri("https://api.twitter.com/oauth2/invalidate_token?access_token=" + token),
                             string.Empty,
-                            new Dictionary<string, string> { { "Authorization", "Basic " + CombineApiKey() } })
-                        .Send());
-
+                            new Dictionary<string, string>
+                                {
+                                    {
+                                        "Authorization", "Basic " + CombineApiKey()
+                                    }
+                                })
+                            .Send());
         }
 
         private string CombineApiKey()

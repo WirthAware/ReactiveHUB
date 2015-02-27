@@ -1,18 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Reactive;
-using System.Reactive.Concurrency;
-using System.Reactive.Linq;
-using System.Reactive.Subjects;
-using System.Text;
-using FluentAssertions;
-using Microsoft.Reactive.Testing;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Moq;
-using ProjectTemplate.WebRequests;
-
-namespace ReactiveHub.Integration.Twitter.Tests
+﻿namespace ReactiveHub.Integration.Twitter.Tests
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Reactive;
+    using System.Reactive.Concurrency;
+    using System.Reactive.Linq;
+    using System.Reactive.Subjects;
+    using System.Text;
+
+    using FluentAssertions;
+
+    using Microsoft.Reactive.Testing;
+    using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+    using Moq;
+
+    using ProjectTemplate.WebRequests;
+
     [TestClass]
     public class ApplicationContextTests
     {
@@ -49,15 +53,23 @@ namespace ReactiveHub.Integration.Twitter.Tests
 
             serviceMock.Verify(
                 x =>
-                    x.CreatePost(new Uri("https://api.twitter.com/oauth2/token?grant_type=client_credentials"),
-                        It.IsAny<string>(), It.IsAny<Dictionary<string, string>>(), null), Times.Once);
+                x.CreatePost(
+                    new Uri("https://api.twitter.com/oauth2/token?grant_type=client_credentials"),
+                    It.IsAny<string>(),
+                    It.IsAny<Dictionary<string, string>>(),
+                    null),
+                Times.Once);
 
             serviceMock.Verify(x => x.SendAndReadAllText(getTokenRequest, It.IsAny<Encoding>(), It.IsAny<IScheduler>()), Times.Once);
 
             serviceMock.Verify(
                 x =>
-                    x.CreatePost(new Uri("https://api.twitter.com/oauth2/invalidate_token?access_token=" + token),
-                        It.IsAny<string>(), It.IsAny<Dictionary<string, string>>(), null), Times.Never);
+                x.CreatePost(
+                    new Uri("https://api.twitter.com/oauth2/invalidate_token?access_token=" + token),
+                    It.IsAny<string>(),
+                    It.IsAny<Dictionary<string, string>>(),
+                    null),
+                Times.Never);
 
             serviceMock.Verify(x => x.Send(invalidateTokenRequest, It.IsAny<IScheduler>()), Times.Never);
 
@@ -65,15 +77,23 @@ namespace ReactiveHub.Integration.Twitter.Tests
 
             serviceMock.Verify(
                 x =>
-                    x.CreatePost(new Uri("https://api.twitter.com/oauth2/token?grant_type=client_credentials"),
-                        It.IsAny<string>(), It.IsAny<Dictionary<string, string>>(), null), Times.Once);
+                x.CreatePost(
+                    new Uri("https://api.twitter.com/oauth2/token?grant_type=client_credentials"),
+                    It.IsAny<string>(),
+                    It.IsAny<Dictionary<string, string>>(),
+                    null),
+                Times.Once);
 
             serviceMock.Verify(x => x.SendAndReadAllText(getTokenRequest, It.IsAny<Encoding>(), It.IsAny<IScheduler>()), Times.Once);
 
             serviceMock.Verify(
                 x =>
-                    x.CreatePost(new Uri("https://api.twitter.com/oauth2/invalidate_token?access_token=" + token),
-                        It.IsAny<string>(), It.IsAny<Dictionary<string, string>>(), null), Times.Once);
+                x.CreatePost(
+                    new Uri("https://api.twitter.com/oauth2/invalidate_token?access_token=" + token),
+                    It.IsAny<string>(),
+                    It.IsAny<Dictionary<string, string>>(),
+                    null),
+                Times.Once);
 
             serviceMock.Verify(x => x.Send(invalidateTokenRequest, It.IsAny<IScheduler>()), Times.Once);
         }
@@ -89,8 +109,9 @@ namespace ReactiveHub.Integration.Twitter.Tests
 
             serviceMock.Setup(
                 x =>
-                    x.CreateGet(new Uri("https://api.twitter.com/1.1/search/tweets.json?q=MySearchString"),
-                        It.IsAny<Dictionary<string, string>>())).Returns(searchRequest);
+                x.CreateGet(
+                    new Uri("https://api.twitter.com/1.1/search/tweets.json?q=MySearchString"),
+                    It.IsAny<Dictionary<string, string>>())).Returns(searchRequest);
 
             serviceMock.Setup(x => x.SendAndReadAllText(searchRequest, It.IsAny<Encoding>(), It.IsAny<IScheduler>()))
                 .Returns(searchResult);
@@ -118,9 +139,11 @@ namespace ReactiveHub.Integration.Twitter.Tests
             completed.Should().BeTrue();
 
             serviceMock.Verify(
-    x =>
-        x.CreateGet(new Uri("https://api.twitter.com/1.1/search/tweets.json?q=MySearchString"),
-            It.IsAny<Dictionary<string, string>>()), Times.Once);
+                x =>
+                x.CreateGet(
+                    new Uri("https://api.twitter.com/1.1/search/tweets.json?q=MySearchString"),
+                    It.IsAny<Dictionary<string, string>>()),
+                Times.Once);
 
             serviceMock.Verify(x => x.SendAndReadAllText(searchRequest, It.IsAny<Encoding>(), It.IsAny<IScheduler>()), Times.Once);
         }
@@ -136,8 +159,9 @@ namespace ReactiveHub.Integration.Twitter.Tests
 
             serviceMock.Setup(
                 x =>
-                    x.CreateGet(new Uri("https://api.twitter.com/1.1/search/tweets.json?q=MySearchString&since_id=123"),
-                        It.IsAny<Dictionary<string, string>>())).Returns(searchRequest);
+                x.CreateGet(
+                    new Uri("https://api.twitter.com/1.1/search/tweets.json?q=MySearchString&since_id=123"),
+                    It.IsAny<Dictionary<string, string>>())).Returns(searchRequest);
 
             serviceMock.Setup(x => x.SendAndReadAllText(searchRequest, It.IsAny<Encoding>(), It.IsAny<IScheduler>()))
                 .Returns(searchResult);
@@ -157,8 +181,10 @@ namespace ReactiveHub.Integration.Twitter.Tests
 
             serviceMock.Verify(
                 x =>
-                    x.CreateGet(new Uri("https://api.twitter.com/1.1/search/tweets.json?q=MySearchString&since_id=123"),
-                        It.IsAny<Dictionary<string, string>>()), Times.Once);
+                x.CreateGet(
+                    new Uri("https://api.twitter.com/1.1/search/tweets.json?q=MySearchString&since_id=123"),
+                    It.IsAny<Dictionary<string, string>>()),
+                Times.Once);
 
             serviceMock.Verify(x => x.SendAndReadAllText(searchRequest, It.IsAny<Encoding>(), It.IsAny<IScheduler>()), Times.Once);
 
@@ -179,13 +205,16 @@ namespace ReactiveHub.Integration.Twitter.Tests
 
             serviceMock.Setup(
                 x =>
-                    x.CreateGet(new Uri("https://api.twitter.com/1.1/search/tweets.json?q=MySearchString&since_id=0"),
-                        It.IsAny<Dictionary<string, string>>())).Returns(searchRequest);            
-            
+                x.CreateGet(
+                    new Uri("https://api.twitter.com/1.1/search/tweets.json?q=MySearchString&since_id=0"),
+                    It.IsAny<Dictionary<string, string>>())).Returns(searchRequest);
+
             serviceMock.Setup(
                 x =>
-                    x.CreateGet(new Uri("https://api.twitter.com/1.1/search/tweets.json?q=MySearchString&since_id=570254350381162496"),
-                        It.IsAny<Dictionary<string, string>>())).Returns(searchRequest);
+                x.CreateGet(
+                    new Uri(
+                    "https://api.twitter.com/1.1/search/tweets.json?q=MySearchString&since_id=570254350381162496"),
+                    It.IsAny<Dictionary<string, string>>())).Returns(searchRequest);
 
             serviceMock.Setup(x => x.SendAndReadAllText(searchRequest, It.IsAny<Encoding>(), It.IsAny<IScheduler>()))
                 .Returns(searchResult);
@@ -207,24 +236,32 @@ namespace ReactiveHub.Integration.Twitter.Tests
 
             serviceMock.Verify(
                 x =>
-                    x.CreateGet(new Uri("https://api.twitter.com/1.1/search/tweets.json?q=MySearchString&since_id=0"),
-                        It.IsAny<Dictionary<string, string>>()), Times.Once);
+                x.CreateGet(
+                    new Uri("https://api.twitter.com/1.1/search/tweets.json?q=MySearchString&since_id=0"),
+                    It.IsAny<Dictionary<string, string>>()),
+                Times.Once);
 
             // Next poll is not done for the next 10 seconds
             scheduler.AdvanceBy(TimeSpan.FromSeconds(10).Ticks - 1);
 
             serviceMock.Verify(
                 x =>
-                    x.CreateGet(new Uri("https://api.twitter.com/1.1/search/tweets.json?q=MySearchString&since_id=570254350381162496"),
-                        It.IsAny<Dictionary<string, string>>()), Times.Never);
+                x.CreateGet(
+                    new Uri(
+                    "https://api.twitter.com/1.1/search/tweets.json?q=MySearchString&since_id=570254350381162496"),
+                    It.IsAny<Dictionary<string, string>>()),
+                Times.Never);
 
             // After 10 seconds the next poll is executed with the correct since_id
             scheduler.AdvanceBy(1);
 
             serviceMock.Verify(
                 x =>
-                    x.CreateGet(new Uri("https://api.twitter.com/1.1/search/tweets.json?q=MySearchString&since_id=570254350381162496"),
-                        It.IsAny<Dictionary<string, string>>()), Times.Once);
+                x.CreateGet(
+                    new Uri(
+                    "https://api.twitter.com/1.1/search/tweets.json?q=MySearchString&since_id=570254350381162496"),
+                    It.IsAny<Dictionary<string, string>>()),
+                Times.Once);
 
             searchResults.Count.Should().Be(30, "both search results should be returned");
 
@@ -235,8 +272,11 @@ namespace ReactiveHub.Integration.Twitter.Tests
 
             serviceMock.Verify(
                 x =>
-                    x.CreateGet(new Uri("https://api.twitter.com/1.1/search/tweets.json?q=MySearchString&since_id=570254350381162496"),
-                        It.IsAny<Dictionary<string, string>>()), Times.Once);
+                x.CreateGet(
+                    new Uri(
+                    "https://api.twitter.com/1.1/search/tweets.json?q=MySearchString&since_id=570254350381162496"),
+                    It.IsAny<Dictionary<string, string>>()),
+                Times.Once);
 
             // No errors occured while polling
             if (ex != null)

@@ -31,6 +31,19 @@
             this.webRequestFactory = factory ?? (uri => new WebRequest(System.Net.WebRequest.Create(uri)));
         }
 
+        public static void ApplyHeaders(Dictionary<string, string> headers, IWebRequest r)
+        {
+            if (headers == null)
+            {
+                return;
+            }
+
+            foreach (var header in headers)
+            {
+                r.Headers[header.Key] = header.Value;
+            }
+        }
+
         public WebRequestData Create(Uri uri, Action<IWebRequest> modifierAction = null, byte[] data = null)
         {
             Func<IWebRequest> requestFactory = () =>
@@ -60,25 +73,16 @@
                 });
         }
 
-        private static void ApplyHeaders(Dictionary<string, string> headers, IWebRequest r)
-        {
-            if (headers != null)
-            {
-                foreach (var header in headers)
-                {
-                    r.Headers[header.Key] = header.Value;
-                }
-            }
-        }
-
         public WebRequestData CreatePost(Uri uri, string data, Dictionary<string, string> headers = null, Encoding encoding = null)
         {
             return this.Create(
-                uri, r =>
-                {
-                    r.Method = "POST";
+                uri,
+                r =>
+                    {
+                        r.Method = "POST";
                     ApplyHeaders(headers, r);
-                }, (encoding ?? Encoding.UTF8).GetBytes(data));
+                }, 
+                (encoding ?? Encoding.UTF8).GetBytes(data));
         }
 
         public IObservable<Unit> Send(WebRequestData data, IScheduler sched = null)
@@ -152,7 +156,8 @@
             }
         }
 
-        private static StreamReader FetchResponseReader<T>(IWebResponse response, IObserver<T> observer, CompositeDisposable d, Encoding encoding)
+        // ReSharper disable once UnusedParameter.Local Justification: This signature is mandatory for the usage
+        private static StreamReader FetchResponseReader<T>(IWebResponse response, IObserver<T> observer, ICollection<IDisposable> d, Encoding encoding)
         {
             var result = new StreamReader(response.GetResponseStream(), encoding);
 
@@ -220,6 +225,7 @@
                             var receiveOn = transformation(r, observer, res);
                             if (receiveStep != null)
                             {
+                                // TODO: Check if IScheduler.Schedule(Action<Action>>) is better here
                                 schedule(() => doReceiveStep(receiveOn));
                             }
                             else
@@ -235,7 +241,8 @@
                         {
                             res.Add(r);
                             schedule(() => prepareReceive(r));
-                        }, observer.OnError);
+                        }, 
+                        observer.OnError);
 
                     // Step 3: Send the data and get the response
                     Action<Stream> sendData = s =>
@@ -257,7 +264,8 @@
                             // The stream needs to be disposed when the scheduled SendData is never executed
                             res.Add(s);
                             schedule(() => sendData(s));
-                        }, observer.OnError);
+                        }, 
+                        observer.OnError);
 
                     // Step 1: Create the request and decide whether to send data or get the response immediately (= Skip steps 2 & 3)
                     Action createRequest = () =>
