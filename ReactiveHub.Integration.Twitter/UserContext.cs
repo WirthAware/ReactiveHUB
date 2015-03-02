@@ -10,7 +10,6 @@
     using System.Reactive.Linq;
     using System.Reactive.Threading.Tasks;
     using System.Text;
-    using System.Threading;
     using ProjectTemplate.WebRequests;
 
     public class UserContext : ApplicationContext
@@ -58,7 +57,7 @@
         /// <returns>An <see cref="IObservable{Tweet}"/> which will return the tweet that has been posted</returns>
         public IObservable<Tweet> PostTweet(string message, string recipient, Tweet replyTo = null)
         {
-            return PostTweet("@" + recipient + " " + message, replyTo);
+            return this.PostTweet("@" + recipient + " " + message, replyTo);
         }
 
         /// <summary>
@@ -121,8 +120,6 @@
         /// Tracks the keywords via the Twitter streaming API
         /// </summary>
         /// <param name="queryString">The query string containing the keywords to track.</param>
-        /// <param name="cancellationToken">A <see cref="CancellationToken"/> which can be used to stop tracking</param>
-        /// <param name="callback">The <see cref="Action"/> to perform for each tweet</param>
         /// <remarks>This is a streaming operation.</remarks>
         /// <exception cref="InvalidOperationException">You tried to start this streaming operation while another streaming operation is running</exception>
         /// <returns>A task that can be awaited to make sure the cancellation has been processed</returns>
