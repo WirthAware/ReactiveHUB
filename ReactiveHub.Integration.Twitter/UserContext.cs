@@ -138,6 +138,7 @@
                                 else
                                 {
                                     isStreaming = true;
+                                    res.Add(Disposable.Create(() => isStreaming = false));
                                     schedule(sendRequest);
                                 }
                             };

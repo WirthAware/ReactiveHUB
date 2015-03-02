@@ -439,6 +439,52 @@
             results.Count(x => x.Kind == NotificationKind.OnNext).Should().Be(2);
         }
 
+        [TestMethod]
+        public void CanOnlyHaveOneTrackingRunning()
+        {
+            var serviceMock = new Mock<IWebRequestService>(MockBehavior.Strict);
+            var getRequest = CreateRequestData(serviceMock);
+
+            serviceMock.Setup(
+                x =>
+                x.CreateGet(
+                    It.Is<Uri>(uri => uri.ToString().StartsWith(EndpointUris.TrackKeyword)),
+                    It.IsAny<Dictionary<string, string>>())).Returns(getRequest);
+
+            var streamedLines = new Subject<string>();
+
+            serviceMock.Setup(
+                x => x.SendAndReadLinewise(getRequest, It.IsAny<Encoding>(), It.IsAny<bool>(), It.IsAny<IScheduler>()))
+                .Returns(streamedLines);
+
+            var sut = new UserContext("123", "456", "789", "ABC", serviceMock.Object);
+
+            var observable = sut.TrackKeywords("Ukraine");
+            var firstResult = Record(observable);
+
+            // Can't subscribe twice since that would lead to two requests running at the same time
+            var anotherResult = Record(observable);
+            CheckForExceptions(firstResult.Item1);
+            ExpectException<Tweet, InvalidOperationException>(anotherResult.Item1);
+            
+            // Can't create another subscription
+            anotherResult = Record(sut.TrackKeywords("Ukraine"));
+            CheckForExceptions(firstResult.Item1);
+            ExpectException<Tweet, InvalidOperationException>(anotherResult.Item1);
+
+            // When I dispose the first subscription, I can create a second one.
+            firstResult.Item2.Dispose();
+            anotherResult = Record(sut.TrackKeywords("Ukraine"));
+
+            CheckForExceptions(firstResult.Item1);
+            CheckForExceptions(anotherResult.Item1);
+        }
+
+        private static void ExpectException<TResult, TException>(IEnumerable<Notification<TResult>> results)
+        {
+            results.Single(x => x.Kind == NotificationKind.OnError).Exception.Should().BeOfType<TException>();
+        }
+
         private static WebRequestData CreateRequestData(IMock<IWebRequestService> serviceMock)
         {
             return new WebRequestData(() => null, Guid.NewGuid().ToByteArray(), serviceMock.Object);
