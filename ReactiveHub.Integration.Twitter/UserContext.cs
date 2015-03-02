@@ -9,6 +9,7 @@
     using System.Reactive.Disposables;
     using System.Reactive.Linq;
     using System.Text;
+
     using ProjectTemplate.WebRequests;
 
     public class UserContext : ApplicationContext
@@ -17,18 +18,29 @@
 
         private bool isStreaming;
 
-        public UserContext(string consumerToken, string consumerSecret, string userToken, string userSecret, IWebRequestService requestService)
+        public UserContext(
+            string consumerToken, 
+            string consumerSecret, 
+            string userToken, 
+            string userSecret, 
+            IWebRequestService requestService)
             : base(consumerToken, consumerSecret, requestService)
         {
-            this.manager = new OAuthManager(Token, Secret, userToken, userSecret);
+            this.manager = new OAuthManager(this.Token, this.Secret, userToken, userSecret);
         }
 
         /// <summary>
         /// Sends a tweet to twitter
         /// </summary>
-        /// <param name="message">The message to tweet</param>
-        /// <param name="replyTo">If specified the new tweet will be a reply to the specified tweet</param>
-        /// <returns>An <see cref="IObservable{Tweet}"/> which will return the tweet that has been posted</returns>
+        /// <param name="message">
+        /// The message to tweet
+        /// </param>
+        /// <param name="replyTo">
+        /// If specified the new tweet will be a reply to the specified tweet
+        /// </param>
+        /// <returns>
+        /// An <see cref="IObservable{Tweet}"/> which will return the tweet that has been posted
+        /// </returns>
         public IObservable<Tweet> PostTweet(string message, Tweet replyTo = null)
         {
             if (replyTo != null && !message.Contains("@" + replyTo.Sender))
@@ -48,10 +60,18 @@
         /// <summary>
         /// Sends a tweet publicly to another twitter user
         /// </summary>
-        /// <param name="message">The message to tweet</param>
-        /// <param name="recipient">The user the tweet should be sent to</param>
-        /// <param name="replyTo">If specified the new tweet will be a reply to the specified tweet</param>
-        /// <returns>An <see cref="IObservable{Tweet}"/> which will return the tweet that has been posted</returns>
+        /// <param name="message">
+        /// The message to tweet
+        /// </param>
+        /// <param name="recipient">
+        /// The user the tweet should be sent to
+        /// </param>
+        /// <param name="replyTo">
+        /// If specified the new tweet will be a reply to the specified tweet
+        /// </param>
+        /// <returns>
+        /// An <see cref="IObservable{Tweet}"/> which will return the tweet that has been posted
+        /// </returns>
         public IObservable<Tweet> PostTweet(string message, string recipient, Tweet replyTo = null)
         {
             return this.PostTweet("@" + recipient + " " + message, replyTo);
@@ -68,26 +88,31 @@
         /// </returns>
         public IObservable<Unit> Like(Tweet tweet)
         {
-            return this.SendPost(
-                EndpointUris.LikeUrl,
-                new Dictionary<string, string>
-                    {
-                        {
-                    "id",
-                    tweet.Id.ToString(
-                        CultureInfo.InvariantCulture)
-                }
-            }).Select(_ => Unit.Default);
+            return
+                this.SendPost(
+                    EndpointUris.LikeUrl, 
+                    new Dictionary<string, string> { { "id", tweet.Id.ToString(CultureInfo.InvariantCulture) } })
+                    .Select(_ => Unit.Default);
         }
 
         /// <summary>
         /// Tracks the keywords via the Twitter streaming API
         /// </summary>
-        /// <param name="queryString">The query string containing the keywords to track.</param>
-        /// <param name="scheduler">The <see cref="IScheduler" /> to run the tracking steps on</param>
-        /// <remarks>This is a streaming operation.</remarks>
-        /// <exception cref="InvalidOperationException">You tried to start this streaming operation while another streaming operation is running</exception>
-        /// <returns>A task that can be awaited to make sure the cancellation has been processed</returns>
+        /// <param name="queryString">
+        /// The query string containing the keywords to track.
+        /// </param>
+        /// <param name="scheduler">
+        /// The <see cref="IScheduler"/> to run the tracking steps on
+        /// </param>
+        /// <remarks>
+        /// This is a streaming operation.
+        /// </remarks>
+        /// <exception cref="InvalidOperationException">
+        /// You tried to start this streaming operation while another streaming operation is running
+        /// </exception>
+        /// <returns>
+        /// A task that can be awaited to make sure the cancellation has been processed
+        /// </returns>
         public IObservable<Tweet> TrackKeywords(string queryString, IScheduler scheduler = null)
         {
             if (scheduler == null)
@@ -116,20 +141,21 @@
                             {
                                 var url = EndpointUris.TrackKeyword + OAuthManager.PercentEncode(queryString);
 
-                                var authenticationHeader = manager.GenerateAuthzHeader(url, "GET");
+                                var authenticationHeader = this.manager.GenerateAuthzHeader(url, "GET");
 
-                                d.Disposable = this.RequestService.CreateGet(
-                                    new Uri(url),
-                                    new Dictionary<string, string> { { "Authorization", authenticationHeader } })
-                                    .SendAndReadLinewise()
-                                    .Where(buffer => !string.IsNullOrWhiteSpace(buffer))
-                                    .Select(Tweet.FromJsonString)
-                                    .Subscribe(observer);
+                                d.Disposable =
+                                    this.RequestService.CreateGet(
+                                        new Uri(url), 
+                                        new Dictionary<string, string> { { "Authorization", authenticationHeader } })
+                                        .SendAndReadLinewise()
+                                        .Where(buffer => !string.IsNullOrWhiteSpace(buffer))
+                                        .Select(Tweet.FromJsonString)
+                                        .Subscribe(observer);
                             };
 
                         Action checkStreaming = () =>
                             {
-                                if (isStreaming)
+                                if (this.isStreaming)
                                 {
                                     observer.OnError(
                                         new InvalidOperationException(
@@ -137,8 +163,8 @@
                                 }
                                 else
                                 {
-                                    isStreaming = true;
-                                    res.Add(Disposable.Create(() => isStreaming = false));
+                                    this.isStreaming = true;
+                                    res.Add(Disposable.Create(() => this.isStreaming = false));
                                     schedule(sendRequest);
                                 }
                             };
@@ -161,16 +187,17 @@
 
         protected override IObservable<string> SendRequest(string url)
         {
-            var authenticationHeader = manager.GenerateAuthzHeader(url, "GET");
+            var authenticationHeader = this.manager.GenerateAuthzHeader(url, "GET");
 
             return
-                this.RequestService.CreateGet(new Uri(url),
-                    new Dictionary<string, string> {{"Authorization", authenticationHeader}}).SendAndReadAllText();
+                this.RequestService.CreateGet(
+                    new Uri(url), 
+                    new Dictionary<string, string> { { "Authorization", authenticationHeader } }).SendAndReadAllText();
         }
 
         private IObservable<string> SendPost(string url, Dictionary<string, string> postFields)
         {
-            var authenticationHeader = manager.GenerateAuthzHeader(url, "POST", postFields);
+            var authenticationHeader = this.manager.GenerateAuthzHeader(url, "POST", postFields);
 
             Action<IWebRequest> configureRequest = r =>
                 {
@@ -180,11 +207,14 @@
                 };
 
             var postData = string.Join(
-              "&",
-              postFields.Select(
-                x => string.Format("{0}={1}", OAuthManager.PercentEncode(x.Key), OAuthManager.PercentEncode(x.Value))));
+                "&", 
+                postFields.Select(
+                    x =>
+                    string.Format("{0}={1}", OAuthManager.PercentEncode(x.Key), OAuthManager.PercentEncode(x.Value))));
 
-            return this.RequestService.Create(new Uri(url), configureRequest, Encoding.UTF8.GetBytes(postData)).SendAndReadAllText();
+            return
+                this.RequestService.Create(new Uri(url), configureRequest, Encoding.UTF8.GetBytes(postData))
+                    .SendAndReadAllText();
         }
     }
 }
