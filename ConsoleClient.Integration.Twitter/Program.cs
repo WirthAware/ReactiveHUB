@@ -97,6 +97,27 @@
                         break;
                     }
 
+                    case "track":
+                    {
+                        if (args.Length < 2)
+                        {
+                            PrintUsage();
+                            return;
+                        }
+
+                        var userContext = new UserContext(
+                            ConfigurationManager.AppSettings["api_key"],
+                            ConfigurationManager.AppSettings["api_secret"],
+                            ConfigurationManager.AppSettings["user_token"],
+                            ConfigurationManager.AppSettings["user_secret"],
+                            service);
+
+                        var queryString = string.Join(" ", args.Skip(1));
+                        subscription = userContext.TrackKeywords(queryString).Subscribe(tweetObserver);
+                        context = userContext;
+                        break;
+                    }
+
                 default:
                     PrintUsage();
                     return;

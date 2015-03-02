@@ -393,6 +393,52 @@
             results.Should().ContainSingle(x => x.Kind == NotificationKind.OnCompleted);
         }
 
+        [TestMethod]
+        public void TrackKeyword()
+        {
+            var serviceMock = new Mock<IWebRequestService>(MockBehavior.Strict);
+            var getRequest = CreateRequestData(serviceMock);
+
+            serviceMock.Setup(
+                x =>
+                x.CreateGet(
+                    It.Is<Uri>(uri => uri.ToString().StartsWith(EndpointUris.TrackKeyword)),
+                    It.IsAny<Dictionary<string, string>>())).Returns(getRequest);
+
+            var streamedLines = new Subject<string>();
+
+            serviceMock.Setup(
+                x => x.SendAndReadLinewise(getRequest, It.IsAny<Encoding>(), It.IsAny<bool>(), It.IsAny<IScheduler>()))
+                .Returns(streamedLines);
+
+            var sut = new UserContext("123", "456", "789", "ABC", serviceMock.Object);
+
+            var returnValue = Record(sut.TrackKeywords("Ukraine"));
+
+            var results = returnValue.Item1;
+
+            CheckForExceptions(results);
+            results.Should().NotContain(x => x.Kind == NotificationKind.OnNext);
+            results.Should().NotContain(x => x.Kind == NotificationKind.OnCompleted);
+
+            streamedLines.OnNext(Properties.Resources.PostResult);
+
+            CheckForExceptions(results);
+            results.Count(x => x.Kind == NotificationKind.OnNext).Should().Be(1);
+            results.Should().NotContain(x => x.Kind == NotificationKind.OnCompleted);
+
+            streamedLines.OnNext(Properties.Resources.PostResult);
+            CheckForExceptions(results);
+            results.Count(x => x.Kind == NotificationKind.OnNext).Should().Be(2);
+
+            returnValue.Item2.Dispose();
+            streamedLines.HasObservers.Should().BeFalse();
+
+            streamedLines.OnNext(Properties.Resources.PostResult);
+            CheckForExceptions(results);
+            results.Count(x => x.Kind == NotificationKind.OnNext).Should().Be(2);
+        }
+
         private static WebRequestData CreateRequestData(IMock<IWebRequestService> serviceMock)
         {
             return new WebRequestData(() => null, Guid.NewGuid().ToByteArray(), serviceMock.Object);

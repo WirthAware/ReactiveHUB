@@ -3,12 +3,11 @@
     using System;
     using System.Collections.Generic;
     using System.Globalization;
-    using System.IO;
     using System.Linq;
-    using System.Net;
     using System.Reactive;
+    using System.Reactive.Concurrency;
+    using System.Reactive.Disposables;
     using System.Reactive.Linq;
-    using System.Reactive.Threading.Tasks;
     using System.Text;
     using ProjectTemplate.WebRequests;
 
@@ -85,86 +84,68 @@
         /// Tracks the keywords via the Twitter streaming API
         /// </summary>
         /// <param name="queryString">The query string containing the keywords to track.</param>
+        /// <param name="scheduler">The <see cref="IScheduler" /> to run the tracking steps on</param>
         /// <remarks>This is a streaming operation.</remarks>
         /// <exception cref="InvalidOperationException">You tried to start this streaming operation while another streaming operation is running</exception>
         /// <returns>A task that can be awaited to make sure the cancellation has been processed</returns>
-        public IObservable<Tweet> TrackKeywords(string queryString)
+        public IObservable<Tweet> TrackKeywords(string queryString, IScheduler scheduler = null)
         {
-            
-            if (isStreaming)
+            if (scheduler == null)
             {
-                throw new InvalidOperationException("Only one streaming operation is permitted at a time");
+                scheduler = Scheduler.CurrentThread;
             }
 
-            isStreaming = true;
+            return Observable.Create<Tweet>(
+                observer =>
+                    {
+                        var d = new MultipleAssignmentDisposable();
+                        var b = new BooleanDisposable();
+                        var res = new CompositeDisposable(new IDisposable[] { d, b });
 
-            var url = "https://stream.twitter.com/1.1/statuses/filter.json?track=" + OAuthManager.PercentEncode(queryString);
+                        Action<Action> schedule = a =>
+                            {
+                                if (b.IsDisposed)
+                                {
+                                    return;
+                                }
 
-            var authenticationHeader = manager.GenerateAuthzHeader(url, "GET");
+                                d.Disposable = scheduler.Schedule(a);
+                            };
 
-            var request = WebRequest.Create(url);
-            request.Method = "GET";
-            request.Headers.Add("Authorization", authenticationHeader);
+                        Action sendRequest = () =>
+                            {
+                                var url = EndpointUris.TrackKeyword + OAuthManager.PercentEncode(queryString);
 
-            /*
-             * REVIEW:
-             * - response is not disposed
-             * - reader is not disposed
-             * - will the endless Observable.Generate terminate when I unsubscribe? -> NO!
-             */
-            return request.GetResponseAsync()
-                .ToObservable()
-                .Select(response => new StreamReader(response.GetResponseStream()))
-                .Select(reader => Observable.Generate(string.Empty, _ => true, _ => reader.ReadLine(), x => x))
-                .Merge()
-                .Where(buffer => !string.IsNullOrWhiteSpace(buffer))
-                .Select(Tweet.FromJsonString);
+                                var authenticationHeader = manager.GenerateAuthzHeader(url, "GET");
 
-            /* Old non-reactive code, this snippet is based on:
-                        request.BeginGetResponse(
-                          result =>
-                          {
-                              try
-                              {
-                                  using (var response = request.EndGetResponse(result))
-                                  {
-                                      using (var reader = new StreamReader(response.GetResponseStream()))
-                                      {
-                                          var buffer = string.Empty;
-                                          var nextChar = reader.Read();
-                                          while (nextChar != -1 && !cancellationToken.IsCancellationRequested)
-                                          {
-                                              buffer += (char)nextChar;
-                                              Trace.Write((char)nextChar);
+                                d.Disposable = this.RequestService.CreateGet(
+                                    new Uri(url),
+                                    new Dictionary<string, string> { { "Authorization", authenticationHeader } })
+                                    .SendAndReadLinewise()
+                                    .Where(buffer => !string.IsNullOrWhiteSpace(buffer))
+                                    .Select(Tweet.FromJsonString)
+                                    .Subscribe(observer);
+                            };
 
-                                              if (buffer.EndsWith("\r\n"))
-                                              {
-                                                  if (buffer != "\r\n")
-                                                  {
-                                                      try
-                                                      {
-                                                          callback(Tweet.FromJsonString(buffer));
-                                                      }
-                                                      catch (Exception e)
-                                                      {
-                                                          Trace.WriteLine("Exception in Tweet callback: " + e.Message);
-                                                      }
-                                                  }
+                        Action checkStreaming = () =>
+                            {
+                                if (isStreaming)
+                                {
+                                    observer.OnError(
+                                        new InvalidOperationException(
+                                            "Only one streaming operation is permitted at a time"));
+                                }
+                                else
+                                {
+                                    isStreaming = true;
+                                    schedule(sendRequest);
+                                }
+                            };
 
-                                                  buffer = string.Empty;
-                                              }
+                        schedule(checkStreaming);
 
-                                              nextChar = reader.Read();
-                                          }
-                                      }
-                                  }
-                              }
-                              finally
-                              {
-                                  isStreaming = false;
-                              }
-                          },
-                          null);*/
+                        return res;
+                    });
         }
 
         protected override void Initialize()
