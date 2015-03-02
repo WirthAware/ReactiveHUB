@@ -23,6 +23,8 @@
     [TestClass]
     public class UserContextTests
     {
+        private const string TweetText = "I'm trying to use the @twitterapi to post a tweet";
+
         [TestMethod]
         public void UsingSearchApi()
         {
@@ -199,8 +201,6 @@
         [TestMethod]
         public void PostingTweet()
         {
-            const string TweetText = "I'm trying to use the @twitterapi to post a tweet";
-
             var serviceMock = new Mock<IWebRequestService>(MockBehavior.Strict);
             var postRequest = CreateRequestData(serviceMock);
 
@@ -212,7 +212,7 @@
 
             byte[] requestData = null;
 
-            serviceMock.Setup(x => x.Create(new Uri("https://api.twitter.com/1.1/statuses/update.json"), It.IsAny<Action<IWebRequest>>(), It.IsAny<byte[]>()))
+            serviceMock.Setup(x => x.Create(new Uri(EndpointUris.PostTweetUrl), It.IsAny<Action<IWebRequest>>(), It.IsAny<byte[]>()))
                 .Callback<Uri, Action<IWebRequest>, byte[]>(
                     (uri, action, data) =>
                         {
@@ -243,8 +243,6 @@
         [TestMethod]
         public void PostingTweetToOtherUser()
         {
-            const string TweetText = "I'm trying to use the @twitterapi to post a tweet";
-
             var serviceMock = new Mock<IWebRequestService>(MockBehavior.Strict);
             var postRequest = CreateRequestData(serviceMock);
 
@@ -256,7 +254,7 @@
 
             byte[] requestData = null;
 
-            serviceMock.Setup(x => x.Create(new Uri("https://api.twitter.com/1.1/statuses/update.json"), It.IsAny<Action<IWebRequest>>(), It.IsAny<byte[]>()))
+            serviceMock.Setup(x => x.Create(new Uri(EndpointUris.PostTweetUrl), It.IsAny<Action<IWebRequest>>(), It.IsAny<byte[]>()))
                 .Callback<Uri, Action<IWebRequest>, byte[]>(
                     (uri, action, data) =>
                     {
@@ -287,8 +285,6 @@
         [TestMethod]
         public void PostingReply()
         {
-            const string TweetText = "I'm trying to use the @twitterapi to post a tweet";
-
             var referenceTweet = new Tweet
                                      {
                                          Id = 123, 
@@ -308,7 +304,7 @@
 
             byte[] requestData = null;
 
-            serviceMock.Setup(x => x.Create(new Uri("https://api.twitter.com/1.1/statuses/update.json"), It.IsAny<Action<IWebRequest>>(), It.IsAny<byte[]>()))
+            serviceMock.Setup(x => x.Create(new Uri(EndpointUris.PostTweetUrl), It.IsAny<Action<IWebRequest>>(), It.IsAny<byte[]>()))
                 .Callback<Uri, Action<IWebRequest>, byte[]>(
                     (uri, action, data) =>
                     {
@@ -335,6 +331,61 @@
                         {
                             { "status", "@originalUser " + TweetText }, 
                             { "in_reply_to_status_id", "123" }
+                        });
+
+            CheckForExceptions(results);
+            results.Should().ContainSingle(x => x.Kind == NotificationKind.OnNext);
+            results.Should().ContainSingle(x => x.Kind == NotificationKind.OnCompleted);
+        }
+
+        [TestMethod]
+        public void LikeTweet()
+        {
+            var referenceTweet = new Tweet
+            {
+                Id = 123,
+                Message = "This is a reference Tweet",
+                Sender = "originalUser",
+                Time = DateTime.Now
+            };
+
+            var serviceMock = new Mock<IWebRequestService>(MockBehavior.Strict);
+            var postRequest = CreateRequestData(serviceMock);
+
+            var requestMock = new Mock<IWebRequest>(MockBehavior.Strict);
+            var headers = new WebHeaderCollection();
+            requestMock.SetupProperty(x => x.Method);
+            requestMock.SetupProperty(x => x.ContentType);
+            requestMock.Setup(x => x.Headers).Returns(headers);
+
+            byte[] requestData = null;
+
+            serviceMock.Setup(x => x.Create(new Uri(EndpointUris.LikeUrl), It.IsAny<Action<IWebRequest>>(), It.IsAny<byte[]>()))
+                .Callback<Uri, Action<IWebRequest>, byte[]>(
+                    (uri, action, data) =>
+                    {
+                        action(requestMock.Object);
+                        requestData = data;
+                    })
+                    .Returns(postRequest);
+
+            serviceMock.Setup(x => x.SendAndReadAllText(postRequest, It.IsAny<Encoding>(), It.IsAny<IScheduler>()))
+                .Returns(Observable.Return(Properties.Resources.PostResult));
+
+            var sut = new UserContext("123", "456", "789", "ABC", serviceMock.Object);
+
+            var results = Record(sut.Like(referenceTweet)).Item1;
+
+            requestMock.VerifySet(x => x.Method = "POST");
+            requestMock.VerifySet(x => x.ContentType = "application/x-www-form-urlencoded; charset=utf-8");
+            headers.AllKeys.Should().Equal("Authorization");
+
+            var postData = DecodePostBody(requestData);
+            postData.Should()
+                .Equal(
+                    new Dictionary<string, string>
+                        {
+                            { "id", "123" }
                         });
 
             CheckForExceptions(results);

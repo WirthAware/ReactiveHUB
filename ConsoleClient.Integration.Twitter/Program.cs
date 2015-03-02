@@ -27,7 +27,8 @@
             }
 
             var service = new WebRequestService();
-            var observer = Observer.Create<Tweet>(PrintTweet, Error, Done);
+            var tweetObserver = Observer.Create<Tweet>(PrintTweet, Error, Done);
+            var actionObserver = Observer.Create<Unit>(_ => { }, Error, Done);
 
             IDisposable context;
             IDisposable subscription;
@@ -47,7 +48,7 @@
                             ConfigurationManager.AppSettings["api_secret"],
                             service);
                         var queryString = string.Join(" ", args.Skip(1));
-                        subscription = applicationContext.Search(queryString).Subscribe(observer);
+                        subscription = applicationContext.Search(queryString).Subscribe(tweetObserver);
                         context = applicationContext;
 
                         break;
@@ -69,9 +70,30 @@
                             service);
 
                         var tweetText = string.Join(" ", args.Skip(1));
-                        subscription = userContext.PostTweet(tweetText).Subscribe(observer);
+                        subscription = userContext.PostTweet(tweetText).Subscribe(tweetObserver);
                         context = userContext;
 
+                        break;
+                    }
+
+                    case "like":
+                    {
+                        if (args.Length < 2)
+                        {
+                            PrintUsage();
+                            return;
+                        }
+
+                        var userContext = new UserContext(
+                            ConfigurationManager.AppSettings["api_key"],
+                            ConfigurationManager.AppSettings["api_secret"],
+                            ConfigurationManager.AppSettings["user_token"],
+                            ConfigurationManager.AppSettings["user_secret"],
+                            service);
+
+                        var id = long.Parse(args[1]);
+                        subscription = userContext.Like(new Tweet { Id = id }).Subscribe(actionObserver);
+                        context = userContext;
                         break;
                     }
 
@@ -107,6 +129,7 @@
             Console.WriteLine("The following command line options are available:");
             Console.WriteLine("search <keyword(s)> - searches for a keyword.");
             Console.WriteLine("post <text> - create a new tweet with the defined text");
+            Console.WriteLine("like <tweetId> - Adds the tweet with the given ID as a favourite");
         }
     }
 }

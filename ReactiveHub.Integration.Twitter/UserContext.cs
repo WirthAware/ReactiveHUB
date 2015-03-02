@@ -32,8 +32,6 @@
         /// <returns>An <see cref="IObservable{Tweet}"/> which will return the tweet that has been posted</returns>
         public IObservable<Tweet> PostTweet(string message, Tweet replyTo = null)
         {
-            const string Url = "https://api.twitter.com/1.1/statuses/update.json";
-
             if (replyTo != null && !message.Contains("@" + replyTo.Sender))
             {
                 return this.PostTweet(message, replyTo.Sender, replyTo);
@@ -45,7 +43,7 @@
                 postFields.Add("in_reply_to_status_id", replyTo.Id.ToString(CultureInfo.InvariantCulture));
             }
 
-            return this.SendPost(Url, postFields).Select(Tweet.FromJsonString);
+            return this.SendPost(EndpointUris.PostTweetUrl, postFields).Select(Tweet.FromJsonString);
         }
 
         /// <summary>
@@ -71,49 +69,16 @@
         /// </returns>
         public IObservable<Unit> Like(Tweet tweet)
         {
-            const string Url = "https://api.twitter.com/1.1/favorites/create.json";
-
-            return SendPost(Url, new Dictionary<string, string>
-            {
-                {
+            return this.SendPost(
+                EndpointUris.LikeUrl,
+                new Dictionary<string, string>
+                    {
+                        {
                     "id",
                     tweet.Id.ToString(
                         CultureInfo.InvariantCulture)
                 }
             }).Select(_ => Unit.Default);
-
-            /* Old code:
-            return Task.Factory.StartNew(
-              () =>
-              {
-                  var postFields = new Dictionary<string, string>
-                                                      {
-                                                        {
-                                                          "id",
-                                                          tweet.Id.ToString(
-                                                            CultureInfo.InvariantCulture)
-                                                        }
-                                                      };
-                  var authenticationHeader = manager.GenerateAuthzHeader(url, "POST", postFields);
-
-                  var postData = string.Join(
-                    "&",
-                    postFields.Select(
-                      x => string.Format("{0}={1}", OAuthManager.PercentEncode(x.Key), OAuthManager.PercentEncode(x.Value))));
-                  var request = (HttpWebRequest)WebRequest.Create(url);
-                  request.Method = "POST";
-
-                  var byteArray = Encoding.UTF8.GetBytes(postData);
-                  request.ContentType = "application/x-www-form-urlencoded; charset=utf-8";
-                  request.Headers.Add("Authorization", authenticationHeader);
-                  request.ContentLength = byteArray.Length;
-                  using (var dataStream = request.GetRequestStream())
-                  {
-                      dataStream.Write(byteArray, 0, byteArray.Length);
-                  }
-
-                  request.GetResponse();
-              });*/
         }
 
         /// <summary>
@@ -125,6 +90,7 @@
         /// <returns>A task that can be awaited to make sure the cancellation has been processed</returns>
         public IObservable<Tweet> TrackKeywords(string queryString)
         {
+            
             if (isStreaming)
             {
                 throw new InvalidOperationException("Only one streaming operation is permitted at a time");
