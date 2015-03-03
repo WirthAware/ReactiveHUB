@@ -35,6 +35,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Models\IAttachment.cs" />
+    <Compile Include="Models\User.cs" />
     <Compile Include="WebRequests\IWebRequest.cs" />
     <Compile Include="WebRequests\IWebRequestService.cs" />
     <Compile Include="WebRequests\IWebResponse.cs" />

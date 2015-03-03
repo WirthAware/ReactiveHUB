@@ -1,4 +1,14 @@
-﻿namespace ReactiveHub.Integration.Twitter
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="OauthManager.cs" company="Zühlke Engineering GmbH">
+//   Zühlke Engineering GmbH
+// </copyright>
+// <summary>
+//   A class to manage OAuth 1.0A interactions. This works with
+//   Twitter; not sure about other OAuth-enabled services.
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace ReactiveHub.Integration.Twitter
 {
     using System;
     using System.Collections.Generic;

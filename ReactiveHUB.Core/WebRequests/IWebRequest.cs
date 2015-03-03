@@ -1,4 +1,13 @@
-﻿namespace ProjectTemplate.WebRequests
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="IWebRequest.cs" company="Zühlke Engineering GmbH">
+//   Zühlke Engineering GmbH
+// </copyright>
+// <summary>
+//   An interface for <see cref="System.Net.WebRequest" />, so it can be mocked
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace ProjectTemplate.WebRequests
 {
     using System;
     using System.IO;

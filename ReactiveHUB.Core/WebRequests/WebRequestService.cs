@@ -1,4 +1,14 @@
-﻿namespace ProjectTemplate.WebRequests
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="WebRequestService.cs" company="Zühlke Engineering GmbH">
+//   Zühlke Engineering GmbH
+// </copyright>
+// <summary>
+//   A service for creating and making web requests.
+//   It should bridge the gap between the <see cref="System.Net.WebRequest" /> and reactive programming
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace ProjectTemplate.WebRequests
 {
     using System;
     using System.Collections.Generic;

@@ -1,4 +1,13 @@
-﻿using System;
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="MessageListItem.xaml.cs" company="Zühlke Engineering GmbH">
+//   Zühlke Engineering GmbH
+// </copyright>
+// <summary>
+//   Interaction logic for MessageListItem.xaml
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;

@@ -1,4 +1,13 @@
-﻿using System;
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="MessageItemViewModel.cs" company="Zühlke Engineering GmbH">
+//   Zühlke Engineering GmbH
+// </copyright>
+// <summary>
+//   Defines the MessageItemViewModel type.
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;

@@ -1,4 +1,13 @@
-﻿namespace ReactiveHub.Integration.Twitter
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="ApplicationContext.cs" company="Zühlke Engineering GmbH">
+//   Zühlke Engineering GmbH
+// </copyright>
+// <summary>
+//   Defines the ApplicationContext type.
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace ReactiveHub.Integration.Twitter
 {
     using System;
     using System.Collections;
@@ -15,6 +24,8 @@
     using System.Web.Script.Serialization;
 
     using ProjectTemplate.WebRequests;
+
+    using ReactiveHub.Integration.Twitter.Models;
 
     public class ApplicationContext : IDisposable
     {
@@ -41,9 +52,9 @@
             Initialize();
         }
 
-        public string Token { get; private set; }
+        protected string Token { get; set; }
 
-        public string Secret { get; private set; }
+        protected string Secret { get; set; }
 
         public UserContext CreateUserContext(string userToken, string userSecret)
         {

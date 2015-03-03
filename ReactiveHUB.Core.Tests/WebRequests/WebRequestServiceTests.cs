@@ -1,4 +1,13 @@
-﻿namespace ReactiveHUB.Core.Tests.WebRequests
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="WebRequestServiceTests.cs" company="Zühlke Engineering GmbH">
+//   Zühlke Engineering GmbH
+// </copyright>
+// <summary>
+//   Defines the WebRequestServiceTests type.
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace ReactiveHUB.Core.Tests.WebRequests
 {
     using System;
     using System.Collections.Generic;

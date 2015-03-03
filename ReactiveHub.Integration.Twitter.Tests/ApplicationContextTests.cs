@@ -1,4 +1,13 @@
-﻿namespace ReactiveHub.Integration.Twitter.Tests
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="ApplicationContextTests.cs" company="Zühlke Engineering GmbH">
+//   Zühlke Engineering GmbH
+// </copyright>
+// <summary>
+//   Defines the ApplicationContextTests type.
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace ReactiveHub.Integration.Twitter.Tests
 {
     using System;
     using System.Collections.Generic;
@@ -16,6 +25,8 @@
     using Moq;
 
     using ProjectTemplate.WebRequests;
+
+    using ReactiveHub.Integration.Twitter.Models;
 
     [TestClass]
     public class ApplicationContextTests

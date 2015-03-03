@@ -1,16 +1,16 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="Constants.cs" company="Zühlke Engineering GmbH">
+// <copyright file="User.cs" company="Zühlke Engineering GmbH">
 //   Zühlke Engineering GmbH
 // </copyright>
 // <summary>
-//   Defines the Constants type.
+//   Defines the User type.
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace ReactiveHub.Integration.Twitter
+namespace ProjectTemplate.Models
 {
-    internal static class Constants
+    public abstract class User
     {
-        public const string TwitterDateFormat = "ddd MMM dd HH:mm:ss +ffff yyyy";
+        public string DisplayName { get; set; }
     }
 }

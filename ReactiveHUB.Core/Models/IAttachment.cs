@@ -1,16 +1,16 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="Constants.cs" company="Zühlke Engineering GmbH">
+// <copyright file="IAttachment.cs" company="Zühlke Engineering GmbH">
 //   Zühlke Engineering GmbH
 // </copyright>
 // <summary>
-//   Defines the Constants type.
+//   Defines the IAttachment type.
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace ReactiveHub.Integration.Twitter
+namespace ProjectTemplate.Models
 {
-    internal static class Constants
+    public interface IAttachment
     {
-        public const string TwitterDateFormat = "ddd MMM dd HH:mm:ss +ffff yyyy";
+         
     }
 }

@@ -1,4 +1,13 @@
-﻿namespace ReactiveHub.Integration.Twitter.Tests
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="UserContextTests.cs" company="Zühlke Engineering GmbH">
+//   Zühlke Engineering GmbH
+// </copyright>
+// <summary>
+//   Defines the UserContextTests type.
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace ReactiveHub.Integration.Twitter.Tests
 {
     using System;
     using System.Collections.Generic;
@@ -19,6 +28,8 @@
     using Moq;
 
     using ProjectTemplate.WebRequests;
+
+    using ReactiveHub.Integration.Twitter.Models;
 
     [TestClass]
     public class UserContextTests
@@ -288,8 +299,8 @@
             var referenceTweet = new Tweet
                                      {
                                          Id = 123, 
-                                         Message = "This is a reference Tweet", 
-                                         Sender = "originalUser", 
+                                         Text = "This is a reference Tweet",
+                                         Sender = new TwitterUser { DisplayName = "originalUser" }, 
                                          Time = DateTime.Now
                                      };
 
@@ -344,8 +355,8 @@
             var referenceTweet = new Tweet
             {
                 Id = 123,
-                Message = "This is a reference Tweet",
-                Sender = "originalUser",
+                Text = "This is a reference Tweet",
+                Sender = new TwitterUser { DisplayName = "originalUser" },
                 Time = DateTime.Now
             };
 

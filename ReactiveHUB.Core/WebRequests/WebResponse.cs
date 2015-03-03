@@ -1,4 +1,13 @@
-﻿namespace ProjectTemplate.WebRequests
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="WebResponse.cs" company="Zühlke Engineering GmbH">
+//   Zühlke Engineering GmbH
+// </copyright>
+// <summary>
+//   An internal implementation of <see cref="IWebResponse" /> wrapping the <see cref="System.Net.WebResponse" />
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace ProjectTemplate.WebRequests
 {
     using System;
     using System.IO;

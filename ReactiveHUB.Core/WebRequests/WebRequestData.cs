@@ -1,4 +1,13 @@
-﻿namespace ProjectTemplate.WebRequests
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="WebRequestData.cs" company="Zühlke Engineering GmbH">
+//   Zühlke Engineering GmbH
+// </copyright>
+// <summary>
+//   A struct that saves a web request and the data to send in order to enable a fluent syntax for using web requests
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace ProjectTemplate.WebRequests
 {
     using System;
 

@@ -1,4 +1,13 @@
-﻿using System;
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="IIntegration.cs" company="Zühlke Engineering GmbH">
+//   Zühlke Engineering GmbH
+// </copyright>
+// <summary>
+//   Defines the IIntegration type.
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
+
+using System;
 using System.Reactive;
 
 namespace ProjectTemplate

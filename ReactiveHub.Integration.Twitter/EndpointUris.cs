@@ -1,4 +1,13 @@
-﻿namespace ReactiveHub.Integration.Twitter
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="EndpointUris.cs" company="Zühlke Engineering GmbH">
+//   Zühlke Engineering GmbH
+// </copyright>
+// <summary>
+//   Defines the EndpointUris type.
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace ReactiveHub.Integration.Twitter
 {
     public static class EndpointUris
     {

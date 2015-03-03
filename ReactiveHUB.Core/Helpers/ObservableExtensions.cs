@@ -1,4 +1,13 @@
-﻿using System.Reactive.Threading.Tasks;
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="ObservableExtensions.cs" company="Zühlke Engineering GmbH">
+//   Zühlke Engineering GmbH
+// </copyright>
+// <summary>
+//   Extension methods to <see cref="IObservable{T}" /> and <see cref="IObserver{T}" />
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
+
+using System.Reactive.Threading.Tasks;
 
 namespace ProjectTemplate.Helpers
 {

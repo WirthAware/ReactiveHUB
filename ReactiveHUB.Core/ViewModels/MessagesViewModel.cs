@@ -1,14 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
-using ProjectTemplate.Models;
-using ReactiveUI;
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="MessagesViewModel.cs" company="Zühlke Engineering GmbH">
+//   Zühlke Engineering GmbH
+// </copyright>
+// <summary>
+//   Defines the MessagesViewModel type.
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
 
 namespace ProjectTemplate.ViewModels
 {
+    using ProjectTemplate.Models;
+
+    using ReactiveUI;
+
     public class MessagesViewModel : ReactiveObject
     {
         public MessagesViewModel()

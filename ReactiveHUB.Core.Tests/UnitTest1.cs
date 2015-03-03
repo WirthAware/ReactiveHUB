@@ -1,4 +1,13 @@
-﻿namespace ReactiveHUB.Core.Tests
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="UnitTest1.cs" company="Zühlke Engineering GmbH">
+//   Zühlke Engineering GmbH
+// </copyright>
+// <summary>
+//   Defines the Test type.
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace ReactiveHUB.Core.Tests
 {
     using System.Reactive;
     using System.Reactive.Disposables;

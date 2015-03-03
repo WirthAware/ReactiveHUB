@@ -1,4 +1,13 @@
-﻿namespace ReactiveHub.Integration.Twitter
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="UserContext.cs" company="Zühlke Engineering GmbH">
+//   Zühlke Engineering GmbH
+// </copyright>
+// <summary>
+//   Defines the UserContext type.
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace ReactiveHub.Integration.Twitter
 {
     using System;
     using System.Collections.Generic;
@@ -11,6 +20,8 @@
     using System.Text;
 
     using ProjectTemplate.WebRequests;
+
+    using ReactiveHub.Integration.Twitter.Models;
 
     public class UserContext : ApplicationContext
     {
@@ -43,9 +54,9 @@
         /// </returns>
         public IObservable<Tweet> PostTweet(string message, Tweet replyTo = null)
         {
-            if (replyTo != null && !message.Contains("@" + replyTo.Sender))
+            if (replyTo != null && !message.Contains("@" + replyTo.Sender.DisplayName))
             {
-                return this.PostTweet(message, replyTo.Sender, replyTo);
+                return this.PostTweet(message, replyTo.Sender.DisplayName, replyTo);
             }
 
             var postFields = new Dictionary<string, string> { { "status", message } };

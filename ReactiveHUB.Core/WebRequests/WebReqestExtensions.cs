@@ -1,4 +1,13 @@
-﻿namespace ProjectTemplate.WebRequests
+﻿// --------------------------------------------------------------------------------------------------------------------
+// <copyright file="WebReqestExtensions.cs" company="Zühlke Engineering GmbH">
+//   Zühlke Engineering GmbH
+// </copyright>
+// <summary>
+//   Extension methods for the <see cref="WebRequestData" /> struct, that enable a fluent syntax
+// </summary>
+// --------------------------------------------------------------------------------------------------------------------
+
+namespace ProjectTemplate.WebRequests
 {
     using System;
     using System.Reactive;
