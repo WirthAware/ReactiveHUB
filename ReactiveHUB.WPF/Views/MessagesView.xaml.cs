@@ -7,36 +7,27 @@
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using ProjectTemplate.ViewModels;
-using ReactiveUI;
-
 namespace ProjectTemplate.Views
 {
+    using System.Windows;
+
+    using ProjectTemplate.ViewModels;
+
+    using ReactiveUI;
+
     /// <summary>
-    /// Interaction logic for MessagesView.xaml
+    /// Interaction logic 
     /// </summary>
-    public partial class MessagesView : UserControl, IViewFor<MessagesViewModel>
+    public partial class MessagesView : IViewFor<MessagesViewModel>
     {
+        public static readonly DependencyProperty ViewModelProperty =
+            DependencyProperty.Register("ViewModel", typeof(MessagesViewModel), typeof(MessagesView), new PropertyMetadata(null));
+
         public MessagesView()
         {
             InitializeComponent();
 
-            // :TODO: fix the binding 
-            // this.Bind(ViewModel, x => x.MessageResults, x => x.MessageBox.Items);
+            this.OneWayBind(this.ViewModel, x => x.MessageResults, x => x.MessageBox.ItemsSource);
         }
 
         public MessagesViewModel ViewModel
@@ -44,8 +35,6 @@ namespace ProjectTemplate.Views
             get { return (MessagesViewModel)GetValue(ViewModelProperty); }
             set { SetValue(ViewModelProperty, value); }
         }
-        public static readonly DependencyProperty ViewModelProperty =
-            DependencyProperty.Register("ViewModel", typeof(MessagesViewModel), typeof(MessagesView), new PropertyMetadata(null));
 
         object IViewFor.ViewModel
         {

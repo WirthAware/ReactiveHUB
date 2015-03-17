@@ -12,12 +12,12 @@ namespace ReactiveHub.Integration.Twitter
     using System;
 
     using ProjectTemplate;
+    using ProjectTemplate.Models;
     using ProjectTemplate.WebRequests;
 
-    using ReactiveHub.Integration.Twitter.Models;
-
-    public class TwitterIntegration : IIntegration<Tweet>, IDisposable
+    public class TwitterIntegration : IIntegration, IDisposable
     {
+        // TODO: Replace with token/secret from "ReactiveHUB" Twitter-App (Issue #19)
         private const string AppToken = "RMVtxmVpgUIqG1LzkVFqvSOzt";
 
         private const string AppSecret = "LwqZLELMTu51AeQcrgc7j2O6P5nzgosXWpXsKbF9VL7Kn1eb8M";
@@ -34,10 +34,10 @@ namespace ReactiveHub.Integration.Twitter
             this.context = new UserContext(AppToken, AppSecret, UserToken, UserSecret, new WebRequestService());
         }
 
-        public IObservable<Tweet> IncomingMessages()
+        public IObservable<Message> IncomingMessages()
         {
             // TODO: Replace with Tweets on user wall (Issue #1)
-            return context.TrackKeywords("#GNUTerryPratchett");
+            return context.TrackKeywords("#StPatricksDay");
         }
 
         public void Dispose()

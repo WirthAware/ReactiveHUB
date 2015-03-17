@@ -9,19 +9,72 @@
 
 namespace ProjectTemplate.ViewModels
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Reactive;
+    using System.Reactive.Linq;
+
     using ProjectTemplate.Models;
 
     using ReactiveUI;
 
     public class MessagesViewModel : ReactiveObject
     {
+        private readonly Dictionary<IIntegration, IDisposable> integrationSubscriptions;
+
         public MessagesViewModel()
         {
-            // MessageResults = new ReactiveList<MessageItemViewModel>();
+            this.MessageResults = new ReactiveList<MessageItemViewModel>();
+            this.MessageService = new ReactiveList<IIntegration>();
+            this.integrationSubscriptions = new Dictionary<IIntegration, IDisposable>();
+
+            this.MessageService.ItemsAdded.Subscribe(this.HandleAddedMessageService);
+            this.MessageService.ItemsRemoved.Subscribe(this.HandleRemovedMessageService);
+            this.MessageService.ShouldReset.Subscribe(this.SynchronizeMessageServices);
         }
 
-        public ReactiveList<object> MessageResults { get; set; } 
+        public ReactiveList<MessageItemViewModel> MessageResults { get; set; } 
 
-        public IIntegration<Message> MessageService { get; private set; } 
+        public ReactiveList<IIntegration> MessageService { get; private set; }
+
+        private void HandleAddedMessageService(IIntegration service)
+        {
+            this.integrationSubscriptions[service] = service.IncomingMessages().ObserveOn(RxApp.MainThreadScheduler).Subscribe(this.AddMessage);
+        }
+
+        private void HandleRemovedMessageService(IIntegration service)
+        {
+            this.integrationSubscriptions[service].Dispose();
+            this.integrationSubscriptions.Remove(service);
+        }
+
+        private void SynchronizeMessageServices(Unit _)
+        {
+            var foundIntegrations = integrationSubscriptions.ToDictionary(x => x.Key, x => false);
+
+            foreach (var service in this.MessageService)
+            {
+                // Handle addition of services previously not in the list
+                if (!foundIntegrations.ContainsKey(service))
+                {
+                    this.HandleAddedMessageService(service);
+                }
+
+                // Mark service as present in the new list
+                foundIntegrations[service] = true;
+            }
+
+            // Now get all services that have not been marked and handle their removal
+            foreach (var service in foundIntegrations.Where(x => !x.Value).Select(x => x.Key))
+            {
+                this.HandleRemovedMessageService(service);
+            }
+        }
+
+        private void AddMessage(Message m)
+        {
+            this.MessageResults.Add(new MessageItemViewModel(m));
+        }
     }
 }
