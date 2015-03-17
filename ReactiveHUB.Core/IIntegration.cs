@@ -7,15 +7,18 @@
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-using System;
-using System.Reactive;
-
 namespace ProjectTemplate
 {
-    public interface IIntegration<TMessage>
+    using System;
+    using System.Reactive;
+
+    using ProjectTemplate.Models;
+
+    public interface IIntegration<TMessage> where TMessage : Message
     {
         IObservable<TMessage> IncomingMessages();
 
+        /*
         // How to best send messages?
         // 1) Send one message and return an observable for the success of this operation
         IObservable<Unit> SendMessage(TMessage message); 
@@ -27,5 +30,6 @@ namespace ProjectTemplate
         void SetOutgoingMessages(IObservable<TMessage> messages);
 
         // I personally prefer a way where we get the result of the operation somehow, but actually no of the 3 makes me happy.
+         */
     }
 }
