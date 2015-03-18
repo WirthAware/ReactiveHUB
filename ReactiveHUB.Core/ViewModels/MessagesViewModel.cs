@@ -25,7 +25,7 @@ namespace ProjectTemplate.ViewModels
 
         public MessagesViewModel()
         {
-            this.MessageResults = new ReactiveList<MessageItemViewModel>();
+            this.Messages = new ReactiveList<MessageItemViewModel>();
             this.MessageService = new ReactiveList<IIntegration>();
             this.integrationSubscriptions = new Dictionary<IIntegration, IDisposable>();
 
@@ -34,7 +34,7 @@ namespace ProjectTemplate.ViewModels
             this.MessageService.ShouldReset.Subscribe(this.SynchronizeMessageServices);
         }
 
-        public ReactiveList<MessageItemViewModel> MessageResults { get; set; } 
+        public ReactiveList<MessageItemViewModel> Messages { get; set; }
 
         public ReactiveList<IIntegration> MessageService { get; private set; }
 
@@ -74,7 +74,7 @@ namespace ProjectTemplate.ViewModels
 
         private void AddMessage(Message m)
         {
-            this.MessageResults.Add(new MessageItemViewModel(m));
+            this.Messages.Add(new MessageItemViewModel(m));
         }
     }
 }

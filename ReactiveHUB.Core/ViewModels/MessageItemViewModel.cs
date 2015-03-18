@@ -21,7 +21,7 @@ namespace ProjectTemplate.ViewModels
     {
         private readonly ObservableAsPropertyHelper<string> message;
 
-        private readonly ObservableAsPropertyHelper<string> timestamp;
+        private readonly ObservableAsPropertyHelper<DateTime> timestamp;
 
         private readonly ObservableAsPropertyHelper<string> sender;
 
@@ -30,7 +30,7 @@ namespace ProjectTemplate.ViewModels
             this.message = Observable.Timer(TimeSpan.FromMilliseconds(100)).Select(_ => model.Text).ToProperty(this, x => x.Message);
             this.timestamp =
                 Observable.Timer(TimeSpan.FromMilliseconds(100))
-                    .Select(_ => DateTime.Now.ToString("R", CultureInfo.CurrentUICulture))
+                    .Select(_ => model.TimeStamp)
                     .ToProperty(this, x => x.Timestamp);
 
             this.sender =
@@ -56,7 +56,7 @@ namespace ProjectTemplate.ViewModels
             }
         }
 
-        public string Timestamp
+        public DateTime Timestamp
         {
             get
             {

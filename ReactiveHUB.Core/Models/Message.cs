@@ -9,6 +9,7 @@
 
 namespace ProjectTemplate.Models
 {
+    using System;
     using System.Collections.Generic;
 
     public abstract class Message
@@ -16,11 +17,14 @@ namespace ProjectTemplate.Models
         protected Message()
         {
             this.Attachments = new IAttachment[] { };
+            this.TimeStamp = DateTime.Now;
         }
 
         public string Text { get; set; }
 
         public User Sender { get; set; }
+
+        public DateTime TimeStamp { get; set; }
 
         public IEnumerable<IAttachment> Attachments { get; set; }
     }

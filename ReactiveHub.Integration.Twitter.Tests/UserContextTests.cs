@@ -301,7 +301,7 @@ namespace ReactiveHub.Integration.Twitter.Tests
                                          Id = 123, 
                                          Text = "This is a reference Tweet",
                                          Sender = new TwitterUser { DisplayName = "originalUser" }, 
-                                         Time = DateTime.Now
+                                         TimeStamp = DateTime.Now
                                      };
 
             var serviceMock = new Mock<IWebRequestService>(MockBehavior.Strict);
@@ -357,7 +357,7 @@ namespace ReactiveHub.Integration.Twitter.Tests
                 Id = 123,
                 Text = "This is a reference Tweet",
                 Sender = new TwitterUser { DisplayName = "originalUser" },
-                Time = DateTime.Now
+                TimeStamp = DateTime.Now
             };
 
             var serviceMock = new Mock<IWebRequestService>(MockBehavior.Strict);

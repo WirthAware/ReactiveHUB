@@ -12,8 +12,7 @@
             <ItemsControl x:Name="MessageBox"
                           Background="LightGray"
                           HorizontalAlignment="Stretch"
-                          HorizontalContentAlignment="Stretch">
-            </ItemsControl>
+                          HorizontalContentAlignment="Stretch" />
         </ScrollViewer>
     </Grid>
 </UserControl>

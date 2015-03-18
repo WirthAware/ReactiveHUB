@@ -24,8 +24,6 @@ namespace ReactiveHub.Integration.Twitter.Models
 
         public long Id { get; set; }
 
-        public DateTime Time { get; set; }
-
         public static Tweet FromJsonString(string inputJson)
         {
             return FromJsonObject(new JavaScriptSerializer().Deserialize<Dictionary<string, object>>(inputJson));
@@ -38,7 +36,7 @@ namespace ReactiveHub.Integration.Twitter.Models
                          Id = (long)status["id"],
                          Text = (string)status["text"],
                          Sender = TwitterUser.FromJsonObject((Dictionary<string, object>)status["user"]),
-                         Time = DateTime.ParseExact((string)status["created_at"], Constants.TwitterDateFormat, CultureInfo.InvariantCulture)
+                         TimeStamp = DateTime.ParseExact((string)status["created_at"], Constants.TwitterDateFormat, CultureInfo.InvariantCulture)
                      };
         }
     }
