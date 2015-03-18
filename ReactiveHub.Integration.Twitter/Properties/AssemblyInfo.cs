@@ -45,3 +45,4 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyFileVersion("1.0.0.0")]
 
 [assembly: InternalsVisibleTo("ReactiveHub.Integration.Twitter.Tests")]
+[assembly: InternalsVisibleTo("ConsoleClient.Integration.Twitter")]

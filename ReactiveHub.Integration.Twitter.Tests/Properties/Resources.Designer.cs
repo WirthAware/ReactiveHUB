@@ -77,5 +77,14 @@ namespace ReactiveHub.Integration.Twitter.Tests.Properties {
                 return ResourceManager.GetString("SimpleSearchResult", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to [{&quot;created_at&quot;:&quot;Wed Mar 18 13:52:49 +0000 2015&quot;,&quot;id&quot;:578192336460607488,&quot;id_str&quot;:&quot;578192336460607488&quot;,&quot;text&quot;:&quot;RT @Cosmopolit2010: #blockupyfrankfurt go home and leave Frankfurt in peace!&quot;,&quot;source&quot;:&quot;\u003ca href=\&quot;http:\/\/twitter.com\&quot; rel=\&quot;nofollow\&quot;\u003eTwitter Web Client\u003c\/a\u003e&quot;,&quot;truncated&quot;:false,&quot;in_reply_to_status_id&quot;:null,&quot;in_reply_to_status_id_str&quot;:null,&quot;in_reply_to_user_id&quot;:null,&quot;in_reply_to_user_id_str&quot;:null,&quot;in_reply_to_screen_name&quot;:null,&quot;user&quot;:{&quot;id&quot;:1909183016,&quot;id_str&quot;:&quot;1909183016&quot;,&quot;nam [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string UserTimelinePollResult {
+            get {
+                return ResourceManager.GetString("UserTimelinePollResult", resourceCulture);
+            }
+        }
     }
 }

@@ -16,5 +16,7 @@ namespace ReactiveHub.Integration.Twitter
         public const string PostTweetUrl = "https://api.twitter.com/1.1/statuses/update.json";
 
         public const string TrackKeyword = "https://stream.twitter.com/1.1/statuses/filter.json?track=";
+
+        public const string UserTimeline = "https://api.twitter.com/1.1/statuses/home_timeline.json";
     }
 }

@@ -10,6 +10,7 @@
     using ProjectTemplate.WebRequests;
 
     using ReactiveHub.Integration.Twitter;
+    using ReactiveHub.Integration.Twitter.Models;
 
     /// <summary>
     /// A console client to run the twitter integration during development without having to open the ReactiveHUB
@@ -118,6 +119,20 @@
                         break;
                     }
 
+                    case "timeline":
+                    {
+                        var userContext = new UserContext(
+                            ConfigurationManager.AppSettings["api_key"],
+                            ConfigurationManager.AppSettings["api_secret"],
+                            ConfigurationManager.AppSettings["user_token"],
+                            ConfigurationManager.AppSettings["user_secret"],
+                            service);
+
+                        subscription = userContext.UserTimeline().Subscribe(Console.WriteLine, Error, Done);
+                        context = userContext;
+                        break;
+                    }
+
                 default:
                     PrintUsage();
                     return;
@@ -137,7 +152,7 @@
 
         private static void PrintTweet(Tweet tweet)
         {
-            Console.WriteLine("{0}: {1} ({2:g})", tweet.Sender, tweet.Message, tweet.Time);
+            Console.WriteLine("{0}: {1} ({2:g})", tweet.Sender, tweet.Text, tweet.Time);
         }
 
         private static void Done()

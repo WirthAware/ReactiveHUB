@@ -10,6 +10,7 @@
 namespace ReactiveHub.Integration.Twitter
 {
     using System;
+    using System.Collections;
     using System.Collections.Generic;
     using System.Globalization;
     using System.Linq;
@@ -18,6 +19,7 @@ namespace ReactiveHub.Integration.Twitter
     using System.Reactive.Disposables;
     using System.Reactive.Linq;
     using System.Text;
+    using System.Web.Script.Serialization;
 
     using ProjectTemplate.WebRequests;
 
@@ -30,10 +32,10 @@ namespace ReactiveHub.Integration.Twitter
         private bool isStreaming;
 
         public UserContext(
-            string consumerToken, 
-            string consumerSecret, 
-            string userToken, 
-            string userSecret, 
+            string consumerToken,
+            string consumerSecret,
+            string userToken,
+            string userSecret,
             IWebRequestService requestService)
             : base(consumerToken, consumerSecret, requestService)
         {
@@ -101,7 +103,7 @@ namespace ReactiveHub.Integration.Twitter
         {
             return
                 this.SendPost(
-                    EndpointUris.LikeUrl, 
+                    EndpointUris.LikeUrl,
                     new Dictionary<string, string> { { "id", tweet.Id.ToString(CultureInfo.InvariantCulture) } })
                     .Select(_ => Unit.Default);
         }
@@ -133,57 +135,123 @@ namespace ReactiveHub.Integration.Twitter
 
             return Observable.Create<Tweet>(
                 observer =>
-                    {
-                        var d = new MultipleAssignmentDisposable();
-                        var b = new BooleanDisposable();
-                        var res = new CompositeDisposable(new IDisposable[] { d, b });
+                {
+                    var d = new MultipleAssignmentDisposable();
+                    var b = new BooleanDisposable();
+                    var res = new CompositeDisposable(new IDisposable[] { d, b });
 
-                        Action<Action> schedule = a =>
+                    Action<Action> schedule = a =>
+                        {
+                            if (b.IsDisposed)
                             {
-                                if (b.IsDisposed)
-                                {
-                                    return;
-                                }
+                                return;
+                            }
 
-                                d.Disposable = scheduler.Schedule(a);
-                            };
+                            d.Disposable = scheduler.Schedule(a);
+                        };
 
-                        Action sendRequest = () =>
+                    Action sendRequest = () =>
+                        {
+                            var url = EndpointUris.TrackKeyword + OAuthManager.PercentEncode(queryString);
+
+                            var authenticationHeader = this.manager.GenerateAuthzHeader(url, "GET");
+
+                            d.Disposable =
+                                this.RequestService.CreateGet(
+                                    new Uri(url),
+                                    new Dictionary<string, string> { { "Authorization", authenticationHeader } })
+                                    .SendAndReadLinewise()
+                                    .Where(buffer => !string.IsNullOrWhiteSpace(buffer))
+                                    .Select(Tweet.FromJsonString)
+                                    .Subscribe(observer);
+                        };
+
+                    Action checkStreaming = () =>
+                        {
+                            if (this.isStreaming)
                             {
-                                var url = EndpointUris.TrackKeyword + OAuthManager.PercentEncode(queryString);
-
-                                var authenticationHeader = this.manager.GenerateAuthzHeader(url, "GET");
-
-                                d.Disposable =
-                                    this.RequestService.CreateGet(
-                                        new Uri(url), 
-                                        new Dictionary<string, string> { { "Authorization", authenticationHeader } })
-                                        .SendAndReadLinewise()
-                                        .Where(buffer => !string.IsNullOrWhiteSpace(buffer))
-                                        .Select(Tweet.FromJsonString)
-                                        .Subscribe(observer);
-                            };
-
-                        Action checkStreaming = () =>
+                                observer.OnError(
+                                    new InvalidOperationException(
+                                        "Only one streaming operation is permitted at a time"));
+                            }
+                            else
                             {
-                                if (this.isStreaming)
-                                {
-                                    observer.OnError(
-                                        new InvalidOperationException(
-                                            "Only one streaming operation is permitted at a time"));
-                                }
-                                else
-                                {
-                                    this.isStreaming = true;
-                                    res.Add(Disposable.Create(() => this.isStreaming = false));
-                                    schedule(sendRequest);
-                                }
-                            };
+                                this.isStreaming = true;
+                                res.Add(Disposable.Create(() => this.isStreaming = false));
+                                schedule(sendRequest);
+                            }
+                        };
 
-                        schedule(checkStreaming);
+                    schedule(checkStreaming);
 
-                        return res;
-                    });
+                    return res;
+                });
+        }
+
+        public IObservable<Tweet> UserTimeline(IScheduler scheduler = null)
+        {
+            if (scheduler == null)
+            {
+                scheduler = TaskPoolScheduler.Default;
+            }
+
+            return Observable.Create<Tweet>(
+                o =>
+                {
+                    var d = new MultipleAssignmentDisposable();
+                    var s = new MultipleAssignmentDisposable();
+                    var b = new BooleanDisposable();
+                    var res = new CompositeDisposable(new IDisposable[] { d, b, s });
+
+                    long recentId = 0;
+
+                    Action sendRequest = null;
+
+                    // Update recentId for next request and report tweets
+                    Action<string> tweetsReceived = t =>
+                        {
+                            var tweets = new JavaScriptSerializer().Deserialize<ArrayList>(t);
+                            foreach (var tweet in tweets.OfType<Dictionary<string, object>>().Select(Tweet.FromJsonObject))
+                            {
+                                recentId = Math.Max(recentId, tweet.Id);
+                                o.OnNext(tweet);
+                            }
+                        };
+
+                    // Schedule next request in 1min (which is the minimum possible delay due to rate limitations imposed by Twitter)
+                    Action requestCompleted = () =>
+                        {
+                            if (b.IsDisposed)
+                            {
+                                return;
+                            }
+
+                            s.Disposable = scheduler.Schedule(TimeSpan.FromMinutes(1), sendRequest);
+                        };
+
+                    sendRequest = () =>
+                        {
+                            var url = EndpointUris.UserTimeline;
+                            if (recentId > 0)
+                            {
+                                url += "?since_id=" + recentId;
+                            }
+
+                            var authenticationHeader = this.manager.GenerateAuthzHeader(url, "GET");
+
+                            d.Disposable =
+                                this.RequestService.CreateGet(
+                                    new Uri(url),
+                                    new Dictionary<string, string> { { "Authorization", authenticationHeader } })
+                                    .SendAndReadAllText()
+                                    .Where(buffer => !string.IsNullOrWhiteSpace(buffer))
+                                    .Subscribe(tweetsReceived, o.OnError, requestCompleted);
+                        };
+
+                    s.Disposable = scheduler.Schedule(sendRequest);
+
+                    return res;
+                });
         }
 
         protected override void Initialize()
@@ -202,7 +270,7 @@ namespace ReactiveHub.Integration.Twitter
 
             return
                 this.RequestService.CreateGet(
-                    new Uri(url), 
+                    new Uri(url),
                     new Dictionary<string, string> { { "Authorization", authenticationHeader } }).SendAndReadAllText();
         }
 
@@ -218,7 +286,7 @@ namespace ReactiveHub.Integration.Twitter
                 };
 
             var postData = string.Join(
-                "&", 
+                "&",
                 postFields.Select(
                     x =>
                     string.Format("{0}={1}", OAuthManager.PercentEncode(x.Key), OAuthManager.PercentEncode(x.Value))));

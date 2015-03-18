@@ -36,8 +36,7 @@ namespace ReactiveHub.Integration.Twitter
 
         public IObservable<Message> IncomingMessages()
         {
-            // TODO: Replace with Tweets on user wall (Issue #1)
-            return context.TrackKeywords("#StPatricksDay");
+            return context.UserTimeline();
         }
 
         public void Dispose()

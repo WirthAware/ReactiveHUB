@@ -491,6 +491,98 @@ namespace ReactiveHub.Integration.Twitter.Tests
             CheckForExceptions(anotherResult.Item1);
         }
 
+        [TestMethod]
+        public void PollingUserTimeline()
+        {
+            var scheduler = new TestScheduler();
+
+            var serviceMock = new Mock<IWebRequestService>(MockBehavior.Strict);
+
+            var request = CreateRequestData(serviceMock);
+            var result = Observable.Return(Properties.Resources.UserTimelinePollResult);
+
+            serviceMock.Setup(
+                x =>
+                x.CreateGet(
+                    new Uri(EndpointUris.UserTimeline),
+                    It.IsAny<Dictionary<string, string>>())).Returns(request);
+
+            serviceMock.Setup(
+                x =>
+                x.CreateGet(
+                    new Uri(
+                    EndpointUris.UserTimeline + "?since_id=578192336460607488"),
+                    It.IsAny<Dictionary<string, string>>())).Returns(request);
+
+            serviceMock.Setup(x => x.SendAndReadAllText(request, It.IsAny<Encoding>(), It.IsAny<IScheduler>()))
+                .Returns(result);
+
+            var sut = new UserContext("123", "456", "ABC", "DEF", serviceMock.Object);
+
+            var searchResults = new List<Tweet>();
+            Exception ex = null;
+            var completed = false;
+
+            var subscription = sut.UserTimeline(scheduler)
+                .Subscribe(searchResults.Add, e => ex = new AggregateException(e), () => completed = true);
+
+            // First poll is done immediately
+            scheduler.AdvanceBy(1);
+
+            searchResults.Count.Should().Be(19, "all results should be returned");
+            completed.Should().BeFalse();
+
+            serviceMock.Verify(
+                x =>
+                x.CreateGet(
+                    new Uri(EndpointUris.UserTimeline),
+                    It.IsAny<Dictionary<string, string>>()),
+                Times.Once);
+
+            // Next poll is not done for the next 10 seconds
+            scheduler.AdvanceBy(TimeSpan.FromSeconds(60).Ticks - 1);
+
+            serviceMock.Verify(
+                x =>
+                x.CreateGet(
+                    new Uri(
+                    EndpointUris.UserTimeline + "?since_id=578192336460607488"),
+                    It.IsAny<Dictionary<string, string>>()),
+                Times.Never);
+
+            // After 10 seconds the next poll is executed with the correct since_id
+            scheduler.AdvanceBy(1);
+
+            serviceMock.Verify(
+                x =>
+                x.CreateGet(
+                    new Uri(
+                    EndpointUris.UserTimeline + "?since_id=578192336460607488"),
+                    It.IsAny<Dictionary<string, string>>()),
+                Times.Once);
+
+            searchResults.Count.Should().Be(38, "both results should be returned");
+
+            // No more polls after subscription is disposed
+            subscription.Dispose();
+
+            scheduler.AdvanceBy(TimeSpan.FromSeconds(80).Ticks);
+
+            serviceMock.Verify(
+                x =>
+                x.CreateGet(
+                    new Uri(
+                    EndpointUris.UserTimeline + "?since_id=578192336460607488"),
+                    It.IsAny<Dictionary<string, string>>()),
+                Times.Once);
+
+            // No errors occured while polling
+            if (ex != null)
+            {
+                throw ex;
+            }
+        }
+
         private static void ExpectException<TResult, TException>(IEnumerable<Notification<TResult>> results)
         {
             results.Single(x => x.Kind == NotificationKind.OnError).Exception.Should().BeOfType<TException>();
