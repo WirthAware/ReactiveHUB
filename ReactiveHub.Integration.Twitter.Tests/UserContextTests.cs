@@ -27,8 +27,7 @@ namespace ReactiveHub.Integration.Twitter.Tests
 
     using Moq;
 
-    using ProjectTemplate.WebRequests;
-
+    using ReactiveHub.Contracts.WebRequests;
     using ReactiveHub.Integration.Twitter.Models;
 
     [TestClass]

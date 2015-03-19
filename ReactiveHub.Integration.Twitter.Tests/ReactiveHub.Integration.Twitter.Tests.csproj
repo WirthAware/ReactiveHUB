@@ -89,6 +89,10 @@
     <Compile Include="UserContextTests.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\ReactiveHub.Contracts\ReactiveHub.Contracts.csproj">
+      <Project>{8576a5f6-572e-4ba0-9443-449811c0ef23}</Project>
+      <Name>ReactiveHub.Contracts</Name>
+    </ProjectReference>
     <ProjectReference Include="..\ReactiveHUB.Core\ReactiveHUB.Core.csproj">
       <Project>{04039EF0-4288-430F-8C8B-F62FA4EB7BB2}</Project>
       <Name>ReactiveHUB.Core</Name>

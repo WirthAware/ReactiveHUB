@@ -16,6 +16,8 @@ namespace ProjectTemplate.WebRequests
 
     using ProjectTemplate.Helpers;
 
+    using ReactiveHub.Contracts.WebRequests;
+
     /// <summary>
     /// An internal implementation of <see cref="IWebRequest"/> wrapping the <see cref="System.Net.WebRequest"/>
     /// </summary>

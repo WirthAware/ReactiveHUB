@@ -11,9 +11,9 @@ namespace ReactiveHub.Integration.Twitter
 {
     using System;
 
-    using ProjectTemplate;
-    using ProjectTemplate.Models;
-    using ProjectTemplate.WebRequests;
+    using ReactiveHub.Contracts;
+    using ReactiveHub.Contracts.Models;
+    using ReactiveHub.Contracts.WebRequests;
 
     public class TwitterIntegration : IIntegration, IDisposable
     {
@@ -29,9 +29,9 @@ namespace ReactiveHub.Integration.Twitter
 
         private readonly UserContext context;
 
-        public TwitterIntegration()
+        public TwitterIntegration(IWebRequestService webRequestService)
         {
-            this.context = new UserContext(AppToken, AppSecret, UserToken, UserSecret, new WebRequestService());
+            this.context = new UserContext(AppToken, AppSecret, UserToken, UserSecret, webRequestService);
         }
 
         public IObservable<Message> IncomingMessages()

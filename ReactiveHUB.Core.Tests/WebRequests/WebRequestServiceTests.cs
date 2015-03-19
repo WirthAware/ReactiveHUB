@@ -22,6 +22,8 @@ namespace ReactiveHUB.Core.Tests.WebRequests
 
     using ProjectTemplate.WebRequests;
 
+    using ReactiveHub.Contracts.WebRequests;
+
     using WebRequest = ProjectTemplate.WebRequests.WebRequest;
 
     [TestClass]

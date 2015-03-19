@@ -7,12 +7,11 @@
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace ProjectTemplate
+namespace ReactiveHub.Contracts
 {
     using System;
-    using System.Reactive;
 
-    using ProjectTemplate.Models;
+    using ReactiveHub.Contracts.Models;
 
     public interface IIntegration
     {

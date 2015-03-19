@@ -13,7 +13,7 @@ namespace ProjectTemplate.ViewModels
     using System.Globalization;
     using System.Reactive.Linq;
 
-    using ProjectTemplate.Models;
+    using ReactiveHub.Contracts.Models;
 
     using ReactiveUI;
 

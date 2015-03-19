@@ -21,6 +21,8 @@ namespace ProjectTemplate.WebRequests
 
     using ProjectTemplate.Helpers;
 
+    using ReactiveHub.Contracts.WebRequests;
+
     /// <summary>
     /// A service for creating and making web requests. 
     /// It should bridge the gap between the <see cref="System.Net.WebRequest"/> and reactive programming

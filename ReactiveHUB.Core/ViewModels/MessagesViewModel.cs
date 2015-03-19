@@ -15,7 +15,8 @@ namespace ProjectTemplate.ViewModels
     using System.Reactive;
     using System.Reactive.Linq;
 
-    using ProjectTemplate.Models;
+    using ReactiveHub.Contracts;
+    using ReactiveHub.Contracts.Models;
 
     using ReactiveUI;
 

@@ -1,16 +1,16 @@
 ﻿// --------------------------------------------------------------------------------------------------------------------
-// <copyright file="IAttachment.cs" company="Zühlke Engineering GmbH">
+// <copyright file="User.cs" company="Zühlke Engineering GmbH">
 //   Zühlke Engineering GmbH
 // </copyright>
 // <summary>
-//   Defines the IAttachment type.
+//   Defines the User type.
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace ProjectTemplate.Models
+namespace ReactiveHub.Contracts.Models
 {
-    public interface IAttachment
+    public abstract class User
     {
-         
+        public string DisplayName { get; set; }
     }
 }

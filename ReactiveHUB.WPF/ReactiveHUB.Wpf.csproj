@@ -142,6 +142,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\ReactiveHub.Contracts\ReactiveHub.Contracts.csproj">
+      <Project>{8576a5f6-572e-4ba0-9443-449811c0ef23}</Project>
+      <Name>ReactiveHub.Contracts</Name>
+    </ProjectReference>
     <ProjectReference Include="..\ReactiveHUB.Core\ReactiveHUB.Core.csproj">
       <Project>{04039ef0-4288-430f-8c8b-f62fa4eb7bb2}</Project>
       <Name>ReactiveHUB.Core</Name>
