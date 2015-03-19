@@ -7,7 +7,7 @@
 // </summary>
 // --------------------------------------------------------------------------------------------------------------------
 
-namespace ProjectTemplate.WebRequests
+namespace ReactiveHub.Contracts.WebRequests
 {
     using System;
     using System.Reactive;

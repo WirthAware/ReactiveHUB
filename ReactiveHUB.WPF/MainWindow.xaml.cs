@@ -10,6 +10,7 @@
 namespace ProjectTemplate
 {
     using ProjectTemplate.ViewModels;
+    using ProjectTemplate.WebRequests;
 
     using ReactiveHub.Integration.Twitter;
 
@@ -25,7 +26,7 @@ namespace ProjectTemplate
             var viewModel = new MessagesViewModel();
             ViewHost.ViewModel = viewModel;
 
-            viewModel.MessageService.Add(new TwitterIntegration());
+            viewModel.MessageService.Add(new TwitterIntegration(new WebRequestService()));
         }
     }
 }

@@ -23,8 +23,7 @@ namespace ReactiveHub.Integration.Twitter
     using System.Web;
     using System.Web.Script.Serialization;
 
-    using ProjectTemplate.WebRequests;
-
+    using ReactiveHub.Contracts.WebRequests;
     using ReactiveHub.Integration.Twitter.Models;
 
     public class ApplicationContext : IDisposable

@@ -11,7 +11,7 @@ namespace ReactiveHub.Integration.Twitter.Models
 {
     using System.Collections.Generic;
 
-    using ProjectTemplate.Models;
+    using ReactiveHub.Contracts.Models;
 
     public class TwitterUser : User
     {

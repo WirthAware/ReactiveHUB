@@ -13,6 +13,8 @@ namespace ProjectTemplate.WebRequests
     using System.IO;
     using System.Net;
 
+    using ReactiveHub.Contracts.WebRequests;
+
     /// <summary>
     /// An internal implementation of <see cref="IWebResponse"/> wrapping the <see cref="System.Net.WebResponse"/>
     /// </summary>

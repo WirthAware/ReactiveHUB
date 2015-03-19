@@ -21,8 +21,7 @@ namespace ReactiveHub.Integration.Twitter
     using System.Text;
     using System.Web.Script.Serialization;
 
-    using ProjectTemplate.WebRequests;
-
+    using ReactiveHub.Contracts.WebRequests;
     using ReactiveHub.Integration.Twitter.Models;
 
     public class UserContext : ApplicationContext

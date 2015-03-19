@@ -14,7 +14,7 @@ namespace ReactiveHub.Integration.Twitter.Models
     using System.Globalization;
     using System.Web.Script.Serialization;
 
-    using ProjectTemplate.Models;
+    using ReactiveHub.Contracts.Models;
 
     public class Tweet : Message
     {
