@@ -10,9 +10,7 @@
 namespace ReactiveHub.Integration.Twitter
 {
     using System;
-    using System.Collections;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Linq;
     using System.Reactive;
     using System.Reactive.Concurrency;
@@ -20,8 +18,8 @@ namespace ReactiveHub.Integration.Twitter
     using System.Reactive.Linq;
     using System.Reactive.Subjects;
     using System.Text;
-    using System.Web;
-    using System.Web.Script.Serialization;
+
+    using Newtonsoft.Json;
 
     using ReactiveHub.Contracts.WebRequests;
     using ReactiveHub.Integration.Twitter.Models;
@@ -66,9 +64,7 @@ namespace ReactiveHub.Integration.Twitter
         /// <param name="queryString">The term to search for</param>
         public IObservable<Tweet> Search(string queryString)
         {
-            Trace.WriteLine("Searching for '" + queryString + "'");
-
-            return SearchInternal(string.Format("https://api.twitter.com/1.1/search/tweets.json?q={0}", HttpUtility.UrlEncode(queryString)));
+            return SearchInternal(string.Format("https://api.twitter.com/1.1/search/tweets.json?q={0}", Uri.EscapeUriString(queryString)));
         }
 
         /// <summary>
@@ -78,9 +74,7 @@ namespace ReactiveHub.Integration.Twitter
         /// <param name="tweetSinceId">All tweets that are earlier than the tweet specified by this Id are excluded from the search results</param>
         public IObservable<Tweet> Search(string queryString, long tweetSinceId)
         {
-            Trace.WriteLine("Searching for '" + queryString + "' ignoring tweets before #" + tweetSinceId);
-
-            return SearchInternal(string.Format("https://api.twitter.com/1.1/search/tweets.json?q={0}&since_id={1}", HttpUtility.UrlEncode(queryString), tweetSinceId));
+            return SearchInternal(string.Format("https://api.twitter.com/1.1/search/tweets.json?q={0}&since_id={1}", Uri.EscapeUriString(queryString), tweetSinceId));
         }
 
         /// <summary>
@@ -132,9 +126,12 @@ namespace ReactiveHub.Integration.Twitter
                             return;
                         }
 
-                        t.Disposable = Search(queryString, recentId).Subscribe(tweetReceived, observer.OnError, () =>
-                        {
-                            if (!b.IsDisposed)
+                        t.Disposable = Search(queryString, recentId).Subscribe(
+                            tweetReceived,
+                            observer.OnError,
+                            () =>
+                                {
+                                    if (!b.IsDisposed)
                             {
                                 t.Disposable = scheduler.Schedule(interval, doSearch);
                             }
@@ -201,16 +198,16 @@ namespace ReactiveHub.Integration.Twitter
 
             this.RequestService.CreatePost(
                 new Uri("https://api.twitter.com/oauth2/token?grant_type=client_credentials"),
-                "grant_type=client_credentials", new Dictionary<string, string>
-                {
+                "grant_type=client_credentials",
+                new Dictionary<string, string>
                     {
+                        {
                         "Authorization", "Basic " + base64Credentials
                     }
                 }).SendAndReadAllText()
                 .Select(data =>
                 {
-                    var serializer = new JavaScriptSerializer();
-                    var json = serializer.Deserialize<Dictionary<string, object>>(data);
+                    var json = JsonConvert.DeserializeObject<Dictionary<string, object>>(data);
 
                     return (string) json["access_token"];
                 }).Subscribe(bearerTokenSubject);
@@ -235,8 +232,8 @@ namespace ReactiveHub.Integration.Twitter
 
         private string CombineApiKey()
         {
-            var key = HttpUtility.UrlEncode(Token);
-            var secret = HttpUtility.UrlEncode(Secret);
+            var key = Uri.EscapeUriString(Token);
+            var secret = Uri.EscapeUriString(Secret);
             var credentials = key + ":" + secret;
             var base64Credentials = Convert.ToBase64String(Encoding.UTF8.GetBytes(credentials));
             return base64Credentials;
@@ -247,11 +244,14 @@ namespace ReactiveHub.Integration.Twitter
             return SendRequest(url)
                 .SelectMany(reply =>
                 {
-                    var json = new JavaScriptSerializer().Deserialize<Dictionary<string, object>>(reply);
-                    var statuses = ((ArrayList)json["statuses"]).OfType<Dictionary<string, object>>();
-
-                    return statuses.Select(Tweet.FromJsonObject).ToObservable();
+                    var result = JsonConvert.DeserializeObject<SearchResult>(reply);
+                    return result.statuses.Select(Tweet.FromProxy).ToObservable();
                 });
+        }
+
+        private struct SearchResult
+        {
+            public IEnumerable<Tweet.Proxy> statuses;
         }
     }
 }

@@ -18,6 +18,7 @@ namespace ReactiveHub.Integration.Twitter
     using System.Net;
     using System.Security.Cryptography;
     using System.Text;
+    using System.Threading.Tasks;
 
     /// <summary>
     ///   A class to manage OAuth 1.0A interactions. This works with
@@ -323,7 +324,7 @@ namespace ReactiveHub.Integration.Twitter
         public static string PercentEncode(string value)
         {
             var result = new StringBuilder();
-            foreach (var symbol in value)
+            foreach (var symbol in value.ToCharArray())
             {
                 if (UnreservedChars.IndexOf(symbol) != -1)
                 {
@@ -331,7 +332,7 @@ namespace ReactiveHub.Integration.Twitter
                 }
                 else
                 {
-                    foreach (var b in Encoding.UTF8.GetBytes(symbol.ToString(CultureInfo.InvariantCulture)))
+                    foreach (var b in Encoding.UTF8.GetBytes(symbol.ToString()))
                     {
                         result.Append('%' + string.Format("{0:X2}", b));
                     }
@@ -339,272 +340,6 @@ namespace ReactiveHub.Integration.Twitter
             }
 
             return result.ToString();
-        }
-
-        /// <summary>
-        /// Acquire an access token, from the given URI, using the given
-        ///   HTTP method.
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// To use this method, you must first set the oauth_token to the value
-        ///     of the request token.  Eg, oauth["token"] = "whatever".
-        ///   </para>
-        /// <para>
-        /// According to the OAuth spec, you need to do this only ONCE per
-        ///     application.  In other words, the first time the application
-        ///     is run.  The normal oauth workflow is:  (1) get a request token,
-        ///     (2) use that to acquire an access token (which requires explicit
-        ///     user approval), then (3) using that access token, invoke
-        ///     protected services.  The first two steps need to be done only
-        ///     once per application.
-        ///   </para>
-        /// <para>
-        /// For Twitter, at least, you can cache the access tokens
-        ///     indefinitely; Twitter says they never expire.  However, other
-        ///     oauth services may not do the same. Also: the user may at any
-        ///     time revoke his authorization for your app, in which case you
-        ///     need to perform the first 2 steps again.
-        ///   </para>
-        /// </remarks>
-        /// <seealso cref="AcquireRequestToken()"/>
-        /// <param name="uri">
-        /// The uri to the "access token" endpoint of
-        /// the service that implements oauth.  For Twitter, this is
-        /// "https://api.twitter.com/oauth/access_token".
-        /// </param>
-        /// <param name="method">
-        /// The method you will use to send the
-        /// message asking for an access token.  For Twitter, this
-        /// should be "POST".
-        /// </param>
-        /// <param name="pin">
-        /// The PIN returned by the "Application approval" page
-        /// shown by Twitter.  It's a string of numeric digits, 7 or so digits in
-        /// length.
-        /// </param>
-        /// <returns>
-        /// a response object that contains the entire text of the response,
-        ///   as well as extracted parameters. This method presumes the
-        ///   response is query-param encoded. In other words,
-        ///   oauth_token=foo&amp;something_else=bar.
-        /// </returns>
-        public OAuthResponse AcquireAccessToken(string uri, string method, string pin)
-        {
-            this.NewRequest();
-            this._params.Remove("callback"); // no longer needed
-            this._params["verifier"] = pin;
-
-            var authzHeader = this.GetAuthorizationHeader(uri, method);
-
-            try
-            {
-                // prepare the token request
-                var request = (HttpWebRequest)WebRequest.Create(uri);
-                request.Headers.Add("Authorization", authzHeader);
-                request.Method = method;
-
-                using (var response = (HttpWebResponse)request.GetResponse())
-                {
-                    using (var reader = new StreamReader(response.GetResponseStream()))
-                    {
-                        var s = reader.ReadToEnd();
-                        var r = new OAuthResponse(s);
-                        this["token"] = r["oauth_token"];
-                        this["token_secret"] = r["oauth_token_secret"];
-                        this._params.Remove("verifier"); // not needed any longer
-                        return r;
-                    }
-                }
-            }
-            catch (Exception)
-            {
-                this._params.Remove("verifier"); // not needed any longer
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Acquire an access token for Twitter, using the default endpoint and
-        ///   HTTP method.
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// To use this method, you must first set the oauth_token to the value
-        ///     of the request token.  Eg, oauth["token"] = "whatever".
-        ///   </para>
-        /// <para>
-        /// According to the OAuth spec, you need to do this only ONCE per
-        ///     application, the first time the application is run.  The
-        ///     normal oauth workflow is: (1) get a request token, (2) use
-        ///     that to acquire an access token (which requires explicit user
-        ///     approval), then (3) using that access token, invoke protected
-        ///     services.  The first two steps need to be done only once per
-        ///     application.
-        ///   </para>
-        /// <para>
-        /// For Twitter, at least, you can cache the access tokens
-        ///     indefinitely; Twitter says they never expire.  However,
-        ///     other oauth services may not do the same. Also: the user
-        ///     may at any time revoke his authorization for your app,
-        ///     in which case you will get 403 errors. In that case you
-        ///     need to perform the first 2 steps again.
-        ///   </para>
-        /// </remarks>
-        /// <seealso cref="AcquireRequestToken()"/>
-        /// <param name="pin">
-        /// The PIN returned by the "Application approval" page
-        /// shown by Twitter.  It's a string of numeric digits, 7 or so digits in
-        /// length.
-        /// </param>
-        /// <returns>
-        /// a response object that contains the entire text of the response,
-        ///   as well as extracted parameters. This method presumes the
-        ///   response is query-param encoded. In other words,
-        ///   oauth_token=foo&amp;something_else=bar.
-        /// </returns>
-        public OAuthResponse AcquireAccessToken(string pin)
-        {
-            return this.AcquireAccessToken("https://api.twitter.com/oauth/access_token", "POST", pin);
-        }
-
-        /// <summary>
-        /// Acquire a request token from the given URI using the given
-        ///   HTTP method.
-        /// </summary>
-        /// <remarks>
-        /// <para>
-        /// To use this method, first instantiate a new OAuthManager
-        ///     object, then, optionally, set the callback param
-        ///     (oauth["callback"]='oob'). Consult the Twitter documentation
-        ///     for the meaning and usage of the callback parameter. After the
-        ///     call returns, you should direct the user to open a browser
-        ///     window to the authorization page for the OAuth-enabled
-        ///     service. Or, you can automatically open that page yourself. Do
-        ///     this with System.Diagnostics.Process.Start(), passing the URL
-        ///     of the page.  If you're using Twitter, there should be one
-        ///     query param: oauth_token with the value obtained from
-        ///     oauth["token"]. See the example
-        ///   </para>
-        /// <para>
-        /// According to the OAuth spec, you need to do this only ONCE per
-        ///     application, the first time the application is run.  The
-        ///     normal oauth workflow is: (1) get a request token, (2) use
-        ///     that to acquire an access token (which requires explicit user
-        ///     approval), then (3) using that access token, invoke protected
-        ///     services. The first two steps need to be done only once, ever,
-        ///     for each registered application. The third step can be
-        ///     performed many times, over many invocations of the
-        ///     application.
-        ///   </para>
-        /// <para>
-        /// For Twitter, at least, you can cache the access tokens
-        ///     indefinitely; Twitter says they never expire.  However, other
-        ///     oauth services may not do the same. Also: the user may at any
-        ///     time revoke his authorization for your app, in which case you
-        ///     need to perform the first 2 steps again.
-        ///   </para>
-        /// </remarks>
-        /// <seealso cref="AcquireAccessToken(string,string,string)"/>
-        /// <seealso cref="AcquireAccessToken(string)"/>
-        /// <param name="uri">
-        /// The uri to the "request token" endpoint of
-        /// the service that implements oauth.  For Twitter, this is
-        /// "https://api.twitter.com/oauth/request_token".
-        /// </param>
-        /// <param name="method">
-        /// The method you will use to send the
-        /// message asking for a request token.  For Twitter, this
-        /// should be "POST".
-        /// </param>
-        /// <returns>
-        /// a response object that contains the entire text of the response,
-        ///   as well as extracted parameters. This method presumes the
-        ///   response is query-param encoded. In other words,
-        ///   poauth_token=foo&amp;something_else=bar.
-        /// </returns>
-        public OAuthResponse AcquireRequestToken(string uri, string method)
-        {
-            this.NewRequest();
-            var authzHeader = this.GetAuthorizationHeader(uri, method);
-
-            // prepare the token request
-            var request = (HttpWebRequest)WebRequest.Create(uri);
-            request.Headers.Add("Authorization", authzHeader);
-            request.Method = method;
-
-            using (var response = (HttpWebResponse)request.GetResponse())
-            {
-                using (var reader = new StreamReader(response.GetResponseStream()))
-                {
-                    var r = new OAuthResponse(reader.ReadToEnd());
-                    this["token"] = r["oauth_token"];
-
-                    // Sometimes the request_token URL gives us an access token,
-                    // with no user interaction required. Eg, when prior approval
-                    // has already been granted.
-                    try
-                    {
-                        if (r["oauth_token_secret"] != null)
-                        {
-                            this["token_secret"] = r["oauth_token_secret"];
-                        }
-                    }
-                    catch (Exception)
-                    {
-                    }
-
-                    return r;
-                }
-            }
-        }
-
-        /// <summary>
-        ///   Acquire a request token for Twitter using the default endpoint
-        ///   and HTTP method (POST).
-        /// </summary>
-        /// <remarks>
-        ///   <para>
-        ///     To use this method, first instantiate a new OAuthManager object,
-        ///     then set the callback param (oauth["callback"]='oob'). After the
-        ///     call returns, you should direct the user to open a browser window
-        ///     to the authorization page for the OAuth-enabled service. Or,
-        ///     you can automatically open that page yourself. Do this with
-        ///     System.Diagnostics.Process.Start(), passing the URL of the page.
-        ///     There should be one query param: oauth_token with the value
-        ///     obtained from oauth["token"].
-        ///   </para>
-        ///   <para>
-        ///     According to the OAuth spec, you need to do this only ONCE per
-        ///     application.  In other words, the first time the application
-        ///     is run.  The normal oauth workflow is:  (1) get a request token,
-        ///     (2) use that to acquire an access token (which requires explicit
-        ///     user approval), then (3) using that access token, invoke
-        ///     protected services.  The first two steps need to be done only
-        ///     once per application.
-        ///   </para>
-        ///   <para>
-        ///     For Twitter, at least, you can cache the access tokens
-        ///     indefinitely; Twitter says they never expire.  However, other
-        ///     oauth services may not do the same. Also: the user may at any
-        ///     time revoke his authorization for your app, in which case you
-        ///     need to perform the first 2 steps again.
-        ///   </para>
-        /// </remarks>
-        ///
-        /// <seealso cref='AcquireAccessToken(string,string,string)'/>
-        /// <seealso cref='AcquireAccessToken(string)'/>
-        /// <seealso cref='AcquireRequestToken(string,string)'/>
-        ///
-        /// <returns>
-        ///   a response object that contains the entire text of the response,
-        ///   as well as extracted parameters. This method presumes the
-        ///   response is query-param encoded. In other words,
-        ///   poauth_token=foo&amp;something_else=bar.
-        /// </returns>
-        public OAuthResponse AcquireRequestToken()
-        {
-            return this.AcquireRequestToken("https://api.twitter.com/oauth/request_token", "POST");
         }
 
         /// <summary>
@@ -876,7 +611,7 @@ namespace ReactiveHub.Integration.Twitter
             return string.IsNullOrEmpty(realm) ? "OAuth " + erp : string.Format("OAuth realm=\"{0}\", ", realm) + erp;
         }
 
-        private HashAlgorithm GetHash()
+        private HMACSHA1 GetHash()
         {
             if (this["signature_method"] != "HMAC-SHA1")
             {
@@ -887,7 +622,7 @@ namespace ReactiveHub.Integration.Twitter
                 "{0}&{1}", 
                 PercentEncode(this["consumer_secret"]), 
                 PercentEncode(this["token_secret"]));
-            return new HMACSHA1 { Key = Encoding.ASCII.GetBytes(keystring) };
+            return new HMACSHA1(Encoding.GetEncoding("ASCII").GetBytes(keystring));
         }
 
         /// <summary>
@@ -987,7 +722,7 @@ namespace ReactiveHub.Integration.Twitter
             var signatureBase = this.GetSignatureBase(uri, method, additionalFields);
             var hash = this.GetHash();
 
-            var dataBuffer = Encoding.ASCII.GetBytes(signatureBase);
+            var dataBuffer = Encoding.GetEncoding("ASCII").GetBytes(signatureBase);
             var hashBytes = hash.ComputeHash(dataBuffer);
             var sig = Convert.ToBase64String(hashBytes);
             this["signature"] = sig;

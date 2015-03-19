@@ -10,7 +10,6 @@
 namespace ReactiveHub.Integration.Twitter
 {
     using System;
-    using System.Collections;
     using System.Collections.Generic;
     using System.Globalization;
     using System.Linq;
@@ -19,7 +18,8 @@ namespace ReactiveHub.Integration.Twitter
     using System.Reactive.Disposables;
     using System.Reactive.Linq;
     using System.Text;
-    using System.Web.Script.Serialization;
+
+    using Newtonsoft.Json;
 
     using ReactiveHub.Contracts.WebRequests;
     using ReactiveHub.Integration.Twitter.Models;
@@ -209,8 +209,8 @@ namespace ReactiveHub.Integration.Twitter
                     // Update recentId for next request and report tweets
                     Action<string> tweetsReceived = t =>
                         {
-                            var tweets = new JavaScriptSerializer().Deserialize<ArrayList>(t);
-                            foreach (var tweet in tweets.OfType<Dictionary<string, object>>().Select(Tweet.FromJsonObject))
+                            var tweets = JsonConvert.DeserializeObject<IEnumerable<Tweet.Proxy>>(t);
+                            foreach (var tweet in tweets.Select(Tweet.FromProxy))
                             {
                                 recentId = Math.Max(recentId, tweet.Id);
                                 o.OnNext(tweet);

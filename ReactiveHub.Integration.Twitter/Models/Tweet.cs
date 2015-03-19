@@ -12,7 +12,8 @@ namespace ReactiveHub.Integration.Twitter.Models
     using System;
     using System.Collections.Generic;
     using System.Globalization;
-    using System.Web.Script.Serialization;
+
+    using Newtonsoft.Json;
 
     using ReactiveHub.Contracts.Models;
 
@@ -26,18 +27,33 @@ namespace ReactiveHub.Integration.Twitter.Models
 
         public static Tweet FromJsonString(string inputJson)
         {
-            return FromJsonObject(new JavaScriptSerializer().Deserialize<Dictionary<string, object>>(inputJson));
+            return Tweet.FromProxy(JsonConvert.DeserializeObject<Proxy>(inputJson));
         }
 
-        public static Tweet FromJsonObject(IDictionary<string, object> status)
+        internal static Tweet FromProxy(Proxy p)
         {
             return new Tweet
-                     {
-                         Id = (long)status["id"],
-                         Text = (string)status["text"],
-                         Sender = TwitterUser.FromJsonObject((Dictionary<string, object>)status["user"]),
-                         TimeStamp = DateTime.ParseExact((string)status["created_at"], Constants.TwitterDateFormat, CultureInfo.InvariantCulture)
-                     };
+                       {
+                           Id = p.id,
+                           Text = p.text,
+                           Sender = TwitterUser.FromProxy(p.user),
+                           TimeStamp =
+                               DateTime.ParseExact(
+                                   p.created_at,
+                                   Constants.TwitterDateFormat,
+                                   CultureInfo.InvariantCulture)
+                       };
+        }
+
+        internal struct Proxy
+        {
+            public long id;
+
+            public string text;
+
+            public TwitterUser.Proxy user;
+
+            public string created_at;
         }
     }
 }

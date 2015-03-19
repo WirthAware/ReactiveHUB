@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleClient.Integration.T
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReactiveHub.Integration.Twitter.Tests", "ReactiveHub.Integration.Twitter.Tests\ReactiveHub.Integration.Twitter.Tests.csproj", "{38A7DC49-1F0C-45CE-A474-334F7C2FBFD0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReactiveHub.Contracts", "ReactiveHub.Contracts\ReactiveHub.Contracts.csproj", "{8576A5F6-572E-4BA0-9443-449811C0EF23}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{38A7DC49-1F0C-45CE-A474-334F7C2FBFD0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{38A7DC49-1F0C-45CE-A474-334F7C2FBFD0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{38A7DC49-1F0C-45CE-A474-334F7C2FBFD0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8576A5F6-572E-4BA0-9443-449811C0EF23}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8576A5F6-572E-4BA0-9443-449811C0EF23}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8576A5F6-572E-4BA0-9443-449811C0EF23}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8576A5F6-572E-4BA0-9443-449811C0EF23}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

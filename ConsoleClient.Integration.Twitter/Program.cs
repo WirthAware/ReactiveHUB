@@ -152,7 +152,7 @@
 
         private static void PrintTweet(Tweet tweet)
         {
-            Console.WriteLine("{0}: {1} ({2:g})", tweet.Sender, tweet.Text, tweet.Time);
+            Console.WriteLine("{0}: {1} ({2:g})", tweet.Sender.DisplayName, tweet.Text, tweet.TimeStamp);
         }
 
         private static void Done()

@@ -19,12 +19,14 @@ namespace ReactiveHub.Integration.Twitter.Models
         {
         }
 
-        public static TwitterUser FromJsonObject(Dictionary<string, object> dictionary)
+        internal static TwitterUser FromProxy(Proxy user)
         {
-            return new TwitterUser
-                       {
-                           DisplayName = dictionary["screen_name"].ToString()
-                       };
+            return new TwitterUser { DisplayName = user.screen_name };
+        }
+
+        internal struct Proxy
+        {
+            public string screen_name;
         }
     }
 }
