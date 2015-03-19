@@ -23,10 +23,7 @@ namespace ProjectTemplate
         {
             this.InitializeComponent();
 
-            var viewModel = new MessagesViewModel();
-            ViewHost.ViewModel = viewModel;
-
-            viewModel.MessageService.Add(new TwitterIntegration(new WebRequestService()));
+            DataContext = new HostViewModel();
         }
     }
 }

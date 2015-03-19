@@ -20,12 +20,13 @@ namespace ProjectTemplate.ViewModels
 
     using ReactiveUI;
 
-    public class MessagesViewModel : ReactiveObject
+    public class MessagesViewModel : ReactiveObject, IRoutableViewModel
     {
         private readonly Dictionary<IIntegration, IDisposable> integrationSubscriptions;
 
-        public MessagesViewModel()
+        public MessagesViewModel(IScreen hostScreen)
         {
+            this.HostScreen = hostScreen;
             this.Messages = new ReactiveList<MessageItemViewModel>();
             this.MessageService = new ReactiveList<IIntegration>();
             this.integrationSubscriptions = new Dictionary<IIntegration, IDisposable>();
@@ -38,6 +39,16 @@ namespace ProjectTemplate.ViewModels
         public ReactiveList<MessageItemViewModel> Messages { get; set; }
 
         public ReactiveList<IIntegration> MessageService { get; private set; }
+
+        public string UrlPathSegment
+        {
+            get
+            {
+                return "messagelist";
+            }
+        }
+
+        public IScreen HostScreen { get; private set; }
 
         private void HandleAddedMessageService(IIntegration service)
         {
