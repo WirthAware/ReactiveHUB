@@ -35,6 +35,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ViewModels\DialogViewModel.cs" />
     <Compile Include="ViewModels\HostViewModel.cs" />
     <Compile Include="WebRequests\WebRequest.cs" />
     <Compile Include="Helpers\ObservableExtensions.cs" />

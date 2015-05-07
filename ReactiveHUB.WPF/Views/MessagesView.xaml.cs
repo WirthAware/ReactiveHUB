@@ -28,6 +28,7 @@ namespace ProjectTemplate.Views
             InitializeComponent();
 
             this.OneWayBind(this.ViewModel, x => x.Messages, x => x.MessageBox.ItemsSource);
+            this.BindCommand(this.ViewModel, x => x.ComposeMessageCommand, x => x.AddButton);
         }
 
         public MessagesViewModel ViewModel

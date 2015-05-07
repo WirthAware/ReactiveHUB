@@ -19,12 +19,13 @@ namespace ProjectTemplate
     /// <summary>
     /// Interaction logic
     /// </summary>
-    public partial class App
+    public partial class App 
     {
         public App()
         {
             Locator.CurrentMutable.Register(() => new MessagesView(), typeof(IViewFor<MessagesViewModel>));
             Locator.CurrentMutable.Register(() => new MessageListItem(), typeof(IViewFor<MessageItemViewModel>));
+            Locator.CurrentMutable.Register(() => new SomeDialogView(), typeof(IViewFor<DialogViewModel>));
         }
     }
 }

@@ -7,12 +7,23 @@
              d:DesignHeight="300"
              d:DesignWidth="300">
     <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        
         <ScrollViewer HorizontalScrollBarVisibility="Disabled"
-                      VerticalScrollBarVisibility="Visible">
+                      VerticalScrollBarVisibility="Visible"
+                      Grid.Column="1">
             <ItemsControl x:Name="MessageBox"
                           Background="LightGray"
                           HorizontalAlignment="Stretch"
                           HorizontalContentAlignment="Stretch" />
         </ScrollViewer>
+
+        <StackPanel Grid.Column="2" Orientation="Vertical">
+            <Button x:Name="AddButton">➕</Button>
+        </StackPanel>
     </Grid>
 </UserControl>

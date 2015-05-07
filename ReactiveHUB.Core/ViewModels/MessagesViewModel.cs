@@ -14,6 +14,7 @@ namespace ProjectTemplate.ViewModels
     using System.Linq;
     using System.Reactive;
     using System.Reactive.Linq;
+    using System.Windows.Input;
 
     using ReactiveHub.Contracts;
     using ReactiveHub.Contracts.Models;
@@ -27,6 +28,14 @@ namespace ProjectTemplate.ViewModels
         public MessagesViewModel(IScreen hostScreen)
         {
             this.HostScreen = hostScreen;
+            this.UrlPathSegment = "messagelist";
+
+            var composeMessage = new ReactiveCommand();
+            composeMessage.Select(x => new DialogViewModel(hostScreen))
+                .Subscribe(hostScreen.Router.Navigate.Execute);
+
+            this.ComposeMessageCommand = composeMessage;
+
             this.Messages = new ReactiveList<MessageItemViewModel>();
             this.MessageService = new ReactiveList<IIntegration>();
             this.integrationSubscriptions = new Dictionary<IIntegration, IDisposable>();
@@ -40,13 +49,9 @@ namespace ProjectTemplate.ViewModels
 
         public ReactiveList<IIntegration> MessageService { get; private set; }
 
-        public string UrlPathSegment
-        {
-            get
-            {
-                return "messagelist";
-            }
-        }
+        public ICommand ComposeMessageCommand { get; private set; }
+
+        public string UrlPathSegment { get; private set; }
 
         public IScreen HostScreen { get; private set; }
 

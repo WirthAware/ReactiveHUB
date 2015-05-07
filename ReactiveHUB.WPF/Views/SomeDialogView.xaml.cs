@@ -1,28 +1,43 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-
-namespace ProjectTemplate.Views
+﻿namespace ProjectTemplate.Views
 {
-    /// <summary>
-    /// Interaction logic for SomeDialogView.xaml
-    /// </summary>
-    public partial class SomeDialogView : UserControl
+    using System.Windows;
+
+    using ProjectTemplate.ViewModels;
+
+    using ReactiveUI;
+
+    public partial class SomeDialogView : IViewFor<DialogViewModel>
     {
+        public static readonly DependencyProperty ViewModelProperty =
+        DependencyProperty.Register("ViewModel", typeof(DialogViewModel), typeof(SomeDialogView), new PropertyMetadata(null));
+
+        public DialogViewModel ViewModel
+        {
+            get { return (DialogViewModel)this.GetValue(ViewModelProperty); }
+            set
+            {
+                this.SetValue(ViewModelProperty, value);
+            }
+        }
+
+        object IViewFor.ViewModel
+        {
+            get { return this.ViewModel; }
+            set
+            {
+                this.ViewModel = (DialogViewModel)value;
+            }
+        }
+
         public SomeDialogView()
         {
-            InitializeComponent();
+            this.InitializeComponent();
+
+            this.BindCommand(this.ViewModel, x => x.CloseCommand, x => x.NavigateBackButton);
+
+            this.Bind(this.ViewModel, x => x.EnteredValue, x => x.InputBox.Text);
+            this.OneWayBind(this.ViewModel, x => x.SavedValue, x => x.Output.Text);
+            this.BindCommand(this.ViewModel, x => x.SaveCommand, x => x.SaveButton);
         }
     }
 }

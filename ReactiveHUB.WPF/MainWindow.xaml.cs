@@ -10,9 +10,6 @@
 namespace ProjectTemplate
 {
     using ProjectTemplate.ViewModels;
-    using ProjectTemplate.WebRequests;
-
-    using ReactiveHub.Integration.Twitter;
 
     /// <summary>
     /// Interaction logic 
